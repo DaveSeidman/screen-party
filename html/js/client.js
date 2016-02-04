@@ -6,16 +6,10 @@ var Party = function() {
 
   party.partyID;
   party.hash;
-  party.clients = [];
+  party.screens = [];
   var $wrap;
   var $roomID;
   var $clientID;
-  var $clientList;
-  //var $canvas;
-  //var context;
-  //var $phoneImg;
-  var $catImg;
-
 
   var renderer;
   var stage;
@@ -29,52 +23,43 @@ var Party = function() {
     $wrap = $('.wrap');
     $roomID = $('#roomID');
     $clientID = $('#clientID');
-    $clientList = $('#clients');
 
     if(window.location.hash) { // client trying to join a room
 
       //$wrap.hide();
       $roomID.hide();
-      $clientList.hide();
       var agent = navigator.userAgent.substring(0,5);
 
       party.hash = window.location.hash.substring(1);
       //possible to get IP address BEFORE connection established?
-      party.socket = io.connect('192.168.108.27:80', { transports: ['websocket'], query:"partyID="+party.hash+"&agent="+agent });
-      party.socket.on('messageForScreen', messageToScreen);
-
+      party.socket = io.connect('192.168.108.30:80', { transports: ['websocket'], query:"roomID="+party.hash+"&agent="+agent });
+      party.socket.on('roomFound', roomFound);
+      party.socket.on('roomNotFound', roomNotFound);
+      party.socket.on('hostLeft', hostLeft);
     }
     else { // create a new room
 
       createCanvas();
 
-      party.socket = io.connect('192.168.108.27:80', { transports: ['websocket'] });
-      party.socket.on('messageForHost', messageToHost);
+      party.socket = io.connect('192.168.108.30:80', { transports: ['websocket'] });
+      party.socket.on('roomCreated', roomCreated);
+      party.socket.on('clientLeft', removeScreen);
+      party.socket.on('clientAdded', addScreen);
 
     }
 
-    party.socket.on('clientAdded', clientAdded);
-
   });
 
-  function messageToHost(data) {
+  function roomCreated(data) {
 
-      console.log("got an id from server", data);
       $roomID.html(data.ip + "/#" + data.id);
-    //  $clientID.html(party.socket.id);
-      console.log(party.socket.id);
   }
 
-  function messageToScreen(data) {
+  function addScreen(data) { // this is currently running for non-hosts, need to fix
 
-    $clientID.html(party.socket.id);
-  }
-
-
-  function clientAdded(data) { // this is currently running for non-hosts, need to fix
-
-    console.log("new client added", data.id, party.socket.id);
-    var screenID = party.socket.id;
+    //console.log("new client added", data.id, party.socket.id);
+    //var screenID = data.id.substring(2, data.id.length); // strip the /# at the beginning
+    //console.log("----screenID:", screenID);
     //var $newClient = $('<li>' + data.id + '</li>');
   //  $clientList.append($newClient);
 
@@ -96,14 +81,30 @@ var Party = function() {
 
     stage.addChild(sprite);
 
-    var basicText = new PIXI.Text(screenID);
+    var basicText = new PIXI.Text(data.id);
     basicText.x = -140;
-    basicText.y = 60;
-    basicText.scale.set(0.8);
+    basicText.y = 40;
+    basicText.scale.set(0.75);
     sprite.addChild(basicText);
 
-    var screen = new Screen(sprite, randX, randY);
-    party.clients.push(screen);
+    var screen = new Screen(data.id, sprite, randX, randY);
+    party.screens.push(screen);
+  }
+
+  function removeScreen(data) {
+
+    //console.log("removing screen", data.id);
+    //console.log(party.screens.splice(data.id, 1));
+    for(var i = 0; i < party.screens.length; i++) {
+
+      var screen = party.screens[i];
+      console.log("checking id of client", data.id, "against all screen id's", screen.socket);
+      if(screen.socket == data.id) {
+        var matchedScreen = party.screens.splice(i,1)[0];
+        stage.removeChild(matchedScreen.sprite);
+        break;
+      }
+    }
   }
 
 
@@ -146,6 +147,20 @@ var Party = function() {
       }
   }
 
+  function roomFound() {
+
+    $clientID.html(party.socket.id);
+  }
+
+  function roomNotFound() {
+
+    $clientID.html("Room Not Found!");
+  }
+
+  function hostLeft() {
+
+    $clientID.html("Host has left");
+  }
 
 
   return party;
@@ -153,12 +168,10 @@ var Party = function() {
 } ();
 
 
+var Screen = function(socket, sprite, x, y) {
 
-
-
-var Screen = function(id, x, y) {
-
-  this.id = id;
+  this.socket = socket;
+  this.sprite = sprite;
   this.x = x;
   this.y = y;
 }

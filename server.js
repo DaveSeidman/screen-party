@@ -1,6 +1,5 @@
 'use strict';
 
-
 var party = require('./screenparty');  // try to offload game logic to this class
 var app = require('express')();
 var express = require('express');
@@ -8,8 +7,8 @@ var server = require('http').Server(app);
 var io = require('socket.io')(server);
 var multer = require('multer');
 
-var rooms = [];
-
+var rooms = []; // maintain a list of rooms
+var hosts = []; // maintain a list of hosts for each room
 
 var os = require('os');
 var ifaces = os.networkInterfaces();
@@ -25,46 +24,66 @@ io.on('connection', function (socket) {
 
   console.log("incoming connection");
 
-  if(socket.request._query.partyID) { // client trying to enter a room
+  if(socket.request._query.roomID) { // there was a hash, meaning a client is trying to enter a room
 
-    var roomID = socket.request._query.partyID;
-    var agent = socket.request._query.agent;
-    console.log("Client trying to join existing room", agent);
+    var roomID = socket.request._query.roomID;
+    var agent = socket.request._query.agent; // get the client's browser type (or device type hopefully);
+
+    console.log("Client trying to join existing room", roomID, agent);
     if(rooms[roomID]) { // room exists
 
-      console.log("room exists");
+      console.log("room found");
       socket.join(roomID);
-      io.to(roomID).emit('clientAdded', { id: socket.id });
-      socket.emit('messageForScreen', { id: roomID });
-
+      hosts[roomID].emit('clientAdded', { id: socket.id });
+      socket.emit('roomFound');
     }
     else {  // room doesn't exist
-      console.log("no such room");
+      console.log("room not found");
+      socket.emit('roomNotFound');
     }
   }
-  else {  // create a random room
+  else {  // create a room with a random ID
 
-    console.log("no roomID found, create one");
-    roomID = Math.floor(Math.random()*900) + 100;
+    roomID = Math.floor(Math.random()*900) + 100; // add check to make sure this isn't already in rooms array
+    console.log("no roomID found, creating one", roomID);
     rooms[roomID] = roomID;
+    hosts[roomID] = socket;
     socket.join(roomID);
-    socket.emit('messageForHost', { id: roomID, ip:ipAddr });
+    socket.emit('roomCreated', { id: roomID, ip:ipAddr });
+
+    console.log("room created, there are now " + Object.keys(rooms).length + " rooms.");
   }
 
-  socket.on('startParty', createParty);
-  // socket.on('my other event', function (data) {
-  //   console.log(data);
-  // });
+  socket.on('disconnect', function() {
 
+    for(var id in hosts) {
+
+      console.log("---", hosts[id].id);
+      if(hosts[id].id == socket.id) {
+        console.log("the host is disconnecting");
+        socket.to(rooms[id]).emit('hostLeft');
+        delete rooms[id];
+        break;
+      }
+      else {
+        for (roomID in socket.adapter.rooms) break;
+        console.log("a client is leaving room", roomID);
+        hosts[roomID].emit('clientLeft', { id: socket.id });
+      }
+    }
+
+    console.log("there are " + Object.keys(rooms).length + " rooms remaining");
+  });
 
 });
+
+
+
 
 
 function createParty(data) {
   console.log("client asked to start a new party", data);
 }
-
-
 
 
 
