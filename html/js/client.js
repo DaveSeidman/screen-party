@@ -42,6 +42,7 @@ var Party = function() {
     }
     else {
         ipAddress = 'freelun.ch';
+        setupSocket();
     }
 
   });
