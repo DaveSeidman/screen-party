@@ -13,6 +13,7 @@ var hosts = []; // maintain a list of hosts for each room
 var os = require('os');
 var ifaces = os.networkInterfaces();
 var ipAddr;
+var config = require('./config.json');
 
 
 server.listen(80);
@@ -89,19 +90,19 @@ function createParty(data) {
 
 Object.keys(ifaces).forEach(function (ifname) {
   var alias = 0;
-
   ifaces[ifname].forEach(function (iface) {
     if ('IPv4' !== iface.family || iface.internal !== false) {
       // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
       return;
     }
-
     if (alias >= 1) {
-
     } else {
       // this interface has only one ipv4 adress
       //console.log(ifname, iface.address);
       ipAddr = iface.address;
+
+      config.network.ip = ipAddr;
+
     }
     ++alias;
   });

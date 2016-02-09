@@ -11,6 +11,8 @@ var Party = function() {
   var $roomID;
   var $clientID;
 
+  var ipAddress;
+
   var renderer;
   var stage;
   var texture;
@@ -32,7 +34,7 @@ var Party = function() {
 
       party.hash = window.location.hash.substring(1);
       //possible to get IP address BEFORE connection established?
-      party.socket = io.connect('192.168.108.30:80', { transports: ['websocket'], query:"roomID="+party.hash+"&agent="+agent });
+      party.socket = io.connect(ipAddress + ':80', { transports: ['websocket'], query:"roomID="+party.hash+"&agent="+agent });
       party.socket.on('roomFound', roomFound);
       party.socket.on('roomNotFound', roomNotFound);
       party.socket.on('hostLeft', hostLeft);
@@ -41,7 +43,7 @@ var Party = function() {
 
       createCanvas();
 
-      party.socket = io.connect('192.168.108.30:80', { transports: ['websocket'] });
+      party.socket = io.connect(ipAddress + ':80', { transports: ['websocket'] });
       party.socket.on('roomCreated', roomCreated);
       party.socket.on('clientLeft', removeScreen);
       party.socket.on('clientAdded', addScreen);
