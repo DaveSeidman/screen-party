@@ -20,37 +20,51 @@ var Party = function() {
   party.renderer = renderer;
   party.stage = stage;
 
+  //var config = require('./package.json');
+
   $(document).on('ready', function() {
 
     $wrap = $('.wrap');
     $roomID = $('#roomID');
     $clientID = $('#clientID');
 
-    if(window.location.hash) { // client trying to join a room
+    //setupSocket(); // move this to wait until IP address is aquired.
 
-      //$wrap.hide();
-      $roomID.hide();
-      var agent = navigator.userAgent.substring(0,5);
+    $.getJSON("config.json", function(data) {
 
-      party.hash = window.location.hash.substring(1);
-      //possible to get IP address BEFORE connection established?
-      party.socket = io.connect(ipAddress + ':80', { transports: ['websocket'], query:"roomID="+party.hash+"&agent="+agent });
-      party.socket.on('roomFound', roomFound);
-      party.socket.on('roomNotFound', roomNotFound);
-      party.socket.on('hostLeft', hostLeft);
-    }
-    else { // create a new room
-
-      createCanvas();
-
-      party.socket = io.connect(ipAddress + ':80', { transports: ['websocket'] });
-      party.socket.on('roomCreated', roomCreated);
-      party.socket.on('clientLeft', removeScreen);
-      party.socket.on('clientAdded', addScreen);
-
-    }
+        console.log(data);
+        ipAddress = data.network.ip;
+        setupSocket();
+    })
 
   });
+
+  function setupSocket() {
+
+      if(window.location.hash) { // client trying to join a room
+
+        //$wrap.hide();
+        $roomID.hide();
+        var agent = navigator.userAgent.substring(0,5);
+
+        party.hash = window.location.hash.substring(1);
+        //possible to get IP address BEFORE connection established?
+        party.socket = io.connect(ipAddress + ':80', { transports: ['websocket'], query:"roomID="+party.hash+"&agent="+agent });
+        party.socket.on('roomFound', roomFound);
+        party.socket.on('roomNotFound', roomNotFound);
+        party.socket.on('hostLeft', hostLeft);
+      }
+      else { // create a new room
+
+        createCanvas();
+
+        party.socket = io.connect(ipAddress + ':80', { transports: ['websocket'] });
+        party.socket.on('roomCreated', roomCreated);
+        party.socket.on('clientLeft', removeScreen);
+        party.socket.on('clientAdded', addScreen);
+      }
+  }
+
 
   function roomCreated(data) {
 

@@ -5,7 +5,8 @@ var app = require('express')();
 var express = require('express');
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
-var multer = require('multer');
+//var multer = require('multer');
+var fs = require('fs');
 
 var rooms = []; // maintain a list of rooms
 var hosts = []; // maintain a list of hosts for each room
@@ -13,7 +14,8 @@ var hosts = []; // maintain a list of hosts for each room
 var os = require('os');
 var ifaces = os.networkInterfaces();
 var ipAddr;
-var config = require('./config.json');
+var configFile = './html/config.json';
+var config = require(configFile);
 
 
 server.listen(80);
@@ -75,7 +77,6 @@ io.on('connection', function (socket) {
 
     console.log("there are " + Object.keys(rooms).length + " rooms remaining");
   });
-
 });
 
 
@@ -100,8 +101,13 @@ Object.keys(ifaces).forEach(function (ifname) {
       // this interface has only one ipv4 adress
       //console.log(ifname, iface.address);
       ipAddr = iface.address;
-
+      console.log(config);
       config.network.ip = ipAddr;
+
+      fs.writeFile(configFile, JSON.stringify(config, null, 2), function(e) { // can probably delete 'e'
+
+        console.log("updated config file with IP address");
+      });
 
     }
     ++alias;
