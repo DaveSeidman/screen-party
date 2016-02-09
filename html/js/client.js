@@ -29,6 +29,7 @@ var Party = function() {
     $clientID = $('#clientID');
 
     //setupSocket(); // move this to wait until IP address is aquired.
+    console.log(window.location.host.indexOf('localhost') > -1 || window.location.host.indexOf('192') > -1);
 
     $.getJSON("config.json", function(data) {
 
