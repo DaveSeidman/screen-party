@@ -95,9 +95,13 @@ Object.keys(ifaces).forEach(function (ifname) {
     if ('IPv4' !== iface.family || iface.internal !== false) {
       // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
       return;
+      console.log("--1");
     }
     if (alias >= 1) {
+        console.log("--2");
+
     } else {
+        console.log("--3");
       // this interface has only one ipv4 adress
       //console.log(ifname, iface.address);
       ipAddr = iface.address;
