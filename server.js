@@ -74,7 +74,6 @@ io.on('connection', function (socket) {
         hosts[roomID].emit('clientLeft', { id: socket.id });
       }
     }
-
     console.log("there are " + Object.keys(rooms).length + " rooms remaining");
   });
 });

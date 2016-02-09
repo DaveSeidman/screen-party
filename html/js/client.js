@@ -76,7 +76,7 @@ var Party = function() {
 
   function roomCreated(data) {
 
-      $roomID.html(data.ip + "/#" + data.id);
+      $roomID.html((local ? data.ip : ipAddress) + "/#" + data.id);
   }
 
   function addScreen(data) { // this is currently running for non-hosts, need to fix
