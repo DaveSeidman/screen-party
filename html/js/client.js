@@ -16,6 +16,7 @@ var Party = function() {
   var renderer;
   var stage;
   var texture;
+  var local;
 
   party.renderer = renderer;
   party.stage = stage;
@@ -29,14 +30,19 @@ var Party = function() {
     $clientID = $('#clientID');
 
     //setupSocket(); // move this to wait until IP address is aquired.
-    console.log(window.location.host.indexOf('localhost') > -1 || window.location.host.indexOf('192') > -1);
+    local = (window.location.host.indexOf('localhost') > -1 || window.location.host.indexOf('192') > -1);
 
-    $.getJSON("config.json", function(data) {
+    if(local) {
+        $.getJSON("config.json", function(data) {
 
-        console.log(data);
-        ipAddress = data.network.ip;
-        setupSocket();
-    })
+            console.log(data);
+            ipAddress = data.network.ip;
+            setupSocket();
+        });
+    }
+    else {
+        ipAddress = 'freelun.ch';
+    }
 
   });
 
