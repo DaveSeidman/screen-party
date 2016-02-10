@@ -29,16 +29,27 @@ io.on('connection', function (socket) {
 
   if(socket.request._query.roomID) { // there was a hash, meaning a client is trying to enter a room
 
-    var roomID = socket.request._query.roomID;
-    var agent = socket.request._query.agent; // get the client's browser type (or device type hopefully);
+    var _roomID = socket.request._query.roomID;
+    var _agent = socket.request._query.agent; // get the client's browser type (or device type hopefully);
+    var _width = socket.request._query.width;
+    var _height = socket.request._query.height;
+    var _orientation = socket.request._query.orientation;
 
-    console.log("Client trying to join existing room", roomID, agent);
-    if(rooms[roomID]) { // room exists
+    console.log("Client trying to join existing room", _roomID, _agent, _width, _height, _orientation);
+    if(rooms[_roomID]) { // room exists
 
       console.log("room found");
-      socket.join(roomID);
-      hosts[roomID].emit('clientAdded', { id: socket.id });
+      socket.join(_roomID);
+      hosts[_roomID].emit('clientAdded',
+      {
+          id: socket.id,
+          agent:_agent,
+          width:_width,
+          height:_height,
+          orientation:_orientation
+      });
       socket.emit('roomFound');
+      socket.on('motion', screenMoved);
     }
     else {  // room doesn't exist
       console.log("room not found");
@@ -47,12 +58,12 @@ io.on('connection', function (socket) {
   }
   else {  // create a room with a random ID
 
-    roomID = Math.floor(Math.random()*900) + 100; // add check to make sure this isn't already in rooms array
-    console.log("no roomID found, creating one", roomID);
-    rooms[roomID] = roomID;
-    hosts[roomID] = socket;
-    socket.join(roomID);
-    socket.emit('roomCreated', { id: roomID, ip:ipAddr });
+    _roomID = Math.floor(Math.random()*900) + 100; // add check to make sure this isn't already in rooms array
+    console.log("no roomID found, creating one", _roomID);
+    rooms[_roomID] = _roomID;
+    hosts[_roomID] = socket;
+    socket.join(_roomID);
+    socket.emit('roomCreated', { id: _roomID, ip:ipAddr });
 
     console.log("room created, there are now " + Object.keys(rooms).length + " rooms.");
   }
@@ -69,9 +80,9 @@ io.on('connection', function (socket) {
         break;
       }
       else {
-        for (roomID in socket.adapter.rooms) break;
-        console.log("a client is leaving room", roomID);
-        hosts[roomID].emit('clientLeft', { id: socket.id });
+        for (_roomID in socket.adapter.rooms) break;
+        console.log("a client is leaving room", _roomID);
+        hosts[_roomID].emit('clientLeft', { id: socket.id });
       }
     }
     console.log("there are " + Object.keys(rooms).length + " rooms remaining");
@@ -80,6 +91,10 @@ io.on('connection', function (socket) {
 
 
 
+function screenMoved(data) {
+    // tell the host to move the screen
+    hosts[data.room].emit('screenMoved', data);
+}
 
 
 function createParty(data) {
@@ -87,32 +102,21 @@ function createParty(data) {
 }
 
 
-
 Object.keys(ifaces).forEach(function (ifname) {
   var alias = 0;
-
   ifaces[ifname].forEach(function (iface) {
     if ('IPv4' !== iface.family || iface.internal !== false) {
-      // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
       return;
-      console.log("--1");
     }
     if (alias >= 1) {
-        console.log("--2");
 
     } else {
-        console.log("--3");
-      // this interface has only one ipv4 adress
-      //console.log(ifname, iface.address);
       ipAddr = iface.address;
       console.log(config);
       config.network.ip = ipAddr;
-
       fs.writeFile(configFile, JSON.stringify(config, null, 2), function(e) { // can probably delete 'e'
-
         console.log("updated config file with IP address");
       });
-
     }
     ++alias;
   });
