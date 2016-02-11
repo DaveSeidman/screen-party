@@ -21,6 +21,7 @@ var Party = function() {
     var stage;
     var texture;
     var isLocal;
+    var lastX = 0;
 
     var offset = { x:0, y:0 }; // used when dragging screens
 
@@ -125,6 +126,24 @@ var Party = function() {
             });
         }
     }
+
+    function screenMovement(event) {
+       var absX = Math.abs(event.acceleration.x);
+       if(absX > .25 || Math.abs(event.acceleration.y) > .25) {
+           if(absX>lastX){
+                party.socket.emit('motion',
+               {
+                   room:party.roomID,
+                   socket:party.socket.id,
+                   movement: {
+                       x: -event.acceleration.x,
+                       y: event.acceleration.y
+                   }
+               });
+           }
+
+       }
+   }
 
     function assetMovement() {
 
