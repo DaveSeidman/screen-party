@@ -25,68 +25,72 @@ console.log("starting server on port 80");
 
 io.on('connection', function (socket) {
 
-  console.log("incoming connection");
+    console.log("incoming connection");
 
-  if(socket.request._query.roomID) { // there was a hash, meaning a client is trying to enter a room
+    if(socket.request._query.roomID) { // there was a hash, meaning a client is trying to enter a room
 
-    var _roomID = socket.request._query.roomID;
-    var _agent = socket.request._query.agent; // get the client's browser type (or device type hopefully);
-    var _width = socket.request._query.width;
-    var _height = socket.request._query.height;
-    var _orientation = socket.request._query.orientation;
+        var _roomID = socket.request._query.roomID;
+        var _agent = socket.request._query.agent; // get the client's browser type (or device type hopefully);
+        var _width = socket.request._query.width;
+        var _height = socket.request._query.height;
+        var _orientation = socket.request._query.orientation;
 
-    console.log("Client trying to join existing room", _roomID, _agent, _width, _height, _orientation);
-    if(rooms[_roomID]) { // room exists
+        console.log("Client trying to join existing room", _roomID, _agent, _width, _height, _orientation);
+        if(rooms[_roomID]) { // room exists
 
-      console.log("room found");
-      socket.join(_roomID);
-      hosts[_roomID].emit('clientAdded',
-      {
-          id: socket.id,
-          agent:_agent,
-          width:_width,
-          height:_height,
-          orientation:_orientation
-      });
-      socket.emit('roomFound');
-      socket.on('motion', screenMoved);
+            console.log("room found");
+            socket.join(_roomID);
+            hosts[_roomID].emit('clientAdded',
+            {
+                id: socket.id,
+                agent:_agent,
+                width:_width,
+                height:_height,
+                orientation:_orientation
+            });
+            socket.emit('roomFound');
+            socket.on('motion', screenMoved);
+        }
+        else {  // room doesn't exist
+            console.log("room not found");
+            socket.emit('roomNotFound');
+        }
     }
-    else {  // room doesn't exist
-      console.log("room not found");
-      socket.emit('roomNotFound');
+    else {  // create a room with a random ID
+
+        // ------------------------
+        //   host code
+        // ----------------------
+
+        _roomID = Math.floor(Math.random()*900) + 100; // add check to make sure this isn't already in rooms array
+        console.log("no roomID found, creating one", _roomID);
+        rooms[_roomID] = _roomID;
+        hosts[_roomID] = socket;
+        socket.join(_roomID);
+        socket.emit('roomCreated', { id: _roomID, ip:ipAddr });
+        socket.on('addCat', hostAddedCat);
+        console.log("room created, there are now " + Object.keys(rooms).length + " rooms.");
     }
-  }
-  else {  // create a room with a random ID
 
-    _roomID = Math.floor(Math.random()*900) + 100; // add check to make sure this isn't already in rooms array
-    console.log("no roomID found, creating one", _roomID);
-    rooms[_roomID] = _roomID;
-    hosts[_roomID] = socket;
-    socket.join(_roomID);
-    socket.emit('roomCreated', { id: _roomID, ip:ipAddr });
+    socket.on('disconnect', function() {
 
-    console.log("room created, there are now " + Object.keys(rooms).length + " rooms.");
-  }
+        for(var id in hosts) {
 
-  socket.on('disconnect', function() {
-
-    for(var id in hosts) {
-
-      console.log("---", hosts[id].id);
-      if(hosts[id].id == socket.id) {
-        console.log("the host is disconnecting");
-        socket.to(rooms[id]).emit('hostLeft');
-        delete rooms[id];
-        break;
-      }
-      else {
-        for (_roomID in socket.adapter.rooms) break;
-        console.log("a client is leaving room", _roomID);
-        hosts[_roomID].emit('clientLeft', { id: socket.id });
-      }
-    }
-    console.log("there are " + Object.keys(rooms).length + " rooms remaining");
-  });
+            // console.log("---", hosts[id].id);
+            if(hosts[id].id == socket.id) {
+                console.log("the host is disconnecting");
+                socket.to(rooms[id]).emit('hostLeft');
+                delete rooms[id];
+                break;
+            }
+            else {
+                for (_roomID in socket.adapter.rooms) break;
+                console.log("a client is leaving room", _roomID);
+                if(hosts[_roomID]) hosts[_roomID].emit('clientLeft', { id: socket.id });
+            }
+        }
+        console.log("there are " + Object.keys(rooms).length + " rooms remaining");
+    });
 });
 
 
@@ -98,26 +102,34 @@ function screenMoved(data) {
 
 
 function createParty(data) {
-  console.log("client asked to start a new party", data);
+    console.log("client asked to start a new party", data);
+}
+
+function hostAddedCat(data) {
+
+    console.log("cat added", data);
 }
 
 
-Object.keys(ifaces).forEach(function (ifname) {
-  var alias = 0;
-  ifaces[ifname].forEach(function (iface) {
-    if ('IPv4' !== iface.family || iface.internal !== false) {
-      return;
-    }
-    if (alias >= 1) {
+// get local IP address
 
-    } else {
-      ipAddr = iface.address;
-      console.log(config);
-      config.network.ip = ipAddr;
-      fs.writeFile(configFile, JSON.stringify(config, null, 2), function(e) { // can probably delete 'e'
-        console.log("updated config file with IP address");
-      });
-    }
-    ++alias;
-  });
+Object.keys(ifaces).forEach(function (ifname) {
+    var alias = 0;
+    ifaces[ifname].forEach(function (iface) {
+        if ('IPv4' !== iface.family || iface.internal !== false) {
+            return;
+        }
+        if (alias >= 1) {
+
+        }
+        else {
+            ipAddr = iface.address;
+            console.log(config);
+            config.network.ip = ipAddr;
+            fs.writeFile(configFile, JSON.stringify(config, null, 2), function(e) { // can probably delete 'e'
+                console.log("updated config file with IP address");
+            });
+        }
+        ++alias;
+    });
 });

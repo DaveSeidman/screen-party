@@ -8,35 +8,32 @@ var Party = function() {
     party.socket;
     party.hash;
     party.screens = [];
-    var $wrap;
-    var $roomID;
-    var $clientID;
-
-    var ipAddress;
-
-    var renderer;
-    var stage;
-    var texture;
-    var local;
-
-    var image;
-
-    var offset = { x:0, y:0 };
-
+    party.image;
     party.renderer = renderer;
     party.stage = stage;
 
-    //var config = require('./package.json');
+    var $wrap;
+    var $roomID;
+    var $clientID;
+    var $catBtn;
+    var ipAddress;
+    var renderer;
+    var stage;
+    var texture;
+    var isLocal;
+
+    var offset = { x:0, y:0 }; // used when dragging screens
 
     $(document).on('ready', function() {
+
         $wrap = $('.wrap');
         $roomID = $('#roomID');
         $clientID = $('#clientID');
-        //setupSocket(); // move this to wait until IP address is aquired.
-        local = (window.location.host.indexOf('localhost') > -1 || window.location.host.indexOf('192') > -1);
-        if(local) {
+        $catBtn = $('#catBtn');
+
+        isLocal = (window.location.host.indexOf('localhost') > -1 || window.location.host.indexOf('192') > -1);
+        if(isLocal) {
             $.getJSON("config.json", function(data) {
-                console.log(data);
                 ipAddress = data.network.ip;
                 setupSocket();
             });
@@ -50,14 +47,13 @@ var Party = function() {
     function setupSocket() {
 
         // -----------------------------------------
-        //
         //      Screen Code
-        //
         // -----------------------------------------
 
         if(window.location.hash) { // client trying to join a room
             party.roomID = window.location.hash.substring(1);
             $roomID.hide();
+            $catBtn.hide();
             var agent = "default";
             if(navigator.userAgent.match(/Android/i)) agent = "android";
             if(navigator.userAgent.match(/BlackBerry/i)) agent = "blackberry";
@@ -65,8 +61,7 @@ var Party = function() {
             if(navigator.userAgent.match(/Opera Mini/i)) agent = "opera";
             if(navigator.userAgent.match(/IEMobile/i)) agent = "ie";
             party.hash = window.location.hash.substring(1); // get hash minus the #
-            party.socket = io.connect(ipAddress + ':80',
-            {
+            party.socket = io.connect(ipAddress + ':80', {
                 transports: ['websocket'],
                 query:
                 "roomID=" + party.hash + "&" +
@@ -84,9 +79,7 @@ var Party = function() {
 
 
         // -----------------------------------------
-        //
         //      Host Code
-        //
         // -----------------------------------------
 
         else { // create a new room
@@ -96,6 +89,7 @@ var Party = function() {
             party.socket.on('clientLeft', removeScreen);
             party.socket.on('clientAdded', addScreen);
             party.socket.on('screenMoved', moveScreen);
+            $catBtn.on('click', addCat);
         }
     }
 
@@ -114,20 +108,27 @@ var Party = function() {
     function roomFound() {
 
         $clientID.html(party.socket.id);
-        window.ondevicemotion = function(event) {
+        window.addEventListener('devicemotion', screenMovement);
+    }
 
-            if(Math.abs(event.acceleration.x) > .25 || Math.abs(event.acceleration.y) > .25) {
-                party.socket.emit('motion',
-                {
-                    room:party.roomID,
-                    socket:party.socket.id,
-                    movement: {
-                        x: event.acceleration.x,
-                        y: event.acceleration.y
-                    }
-                });
-            }
+    function screenMovement(event) {
+
+        if(Math.abs(event.acceleration.x) > .25 || Math.abs(event.acceleration.y) > .25) {
+            party.socket.emit('motion',
+            {
+                room:party.roomID,
+                socket:party.socket.id,
+                movement: {
+                    x: -event.acceleration.x,
+                    y: event.acceleration.y
+                }
+            });
         }
+    }
+
+    function assetMovement() {
+
+
     }
 
     function roomNotFound() {
@@ -140,7 +141,6 @@ var Party = function() {
         $clientID.html("Host has left");
     }
 
-    // ---------------------------------------------------------
 
 
 
@@ -160,18 +160,31 @@ var Party = function() {
 
     function roomCreated(data) {
 
-        $roomID.html((local ? data.ip : ipAddress) + "/#" + data.id);
+        party.roomID = data.id;
+        $roomID.html((isLocal ? data.ip : ipAddress) + "/#" + data.id);
     }
 
-    function addScreen(data) { // this is currently running for non-hosts, need to fix
+    function addCat() {
+        var texture = PIXI.Texture.fromImage('../img/catPhoto.jpg');
+        var sprite = new PIXI.Sprite(texture);
+        sprite.interactive = true;
+        sprite.buttonMode = true;
+        sprite.anchor.set(0.5);
+        sprite.alpha = .5;
+        sprite.x = -400;
+        sprite.y = -400;
+        sprite
+            .on('mousedown', dragCatStart)
+            .on('mouseup', dragCatEnd)
+            .on('mouseupoutside', dragCatEnd)
+            .on('mousemove', dragCat);
+        stage.addChild(sprite);
+        console.log(party.roomID);
+        party.socket.emit('addCat', { roomID: party.roomID });
+    }
 
-        //console.log("new client added", data.id, party.socket.id);
-        //var screenID = data.id.substring(2, data.id.length); // strip the /# at the beginning
-        //console.log("----screenID:", screenID);
-        //var $newClient = $('<li>' + data.id + '</li>');
-        //  $clientList.append($newClient);
+    function addScreen(data) {
 
-        //var screen = new Screen(data.id, Math.random() * window.innerWidth, Math.random() * window.innerHeight);
         var randX = Math.random() * window.innerWidth;
         var randY = Math.random() * window.innerHeight;
 
@@ -185,10 +198,10 @@ var Party = function() {
         sprite.buttonMode = true;
         sprite.anchor.set(0.5);
         sprite
-        .on('mousedown', onDragStart)
-        .on('mouseup', onDragEnd)
-        .on('mouseupoutside', onDragEnd)
-        .on('mousemove', onDragMove);
+            .on('mousedown', dragScreenStart)
+            .on('mouseup', dragScreenEnd)
+            .on('mouseupoutside', dragScreenEnd)
+            .on('mousemove', dragScreen);
         sprite.position.x = randX;
         sprite.position.y = randY;
 
@@ -197,7 +210,7 @@ var Party = function() {
 
         var basicText = new PIXI.Text(data.id);
         basicText.x = 20;
-        basicText.y = 20;
+        basicText.y = data.height/2;
         basicText.scale.set(0.75);
         sprite.addChild(basicText);
 
@@ -231,12 +244,62 @@ var Party = function() {
         }
     }
 
+    function dragScreenStart(event)  {
+        this.data = event.data;
+        this.dragging = true;
+        offset.x = this.x - this.data.originalEvent.x;
+        offset.y = this.y - this.data.originalEvent.y;
+    }
+
+    function dragScreenEnd()  {
+        this.dragging = false;
+        this.data = null;
+    }
+
+    function dragScreen() {
+        if (this.dragging)  {
+            var newPosition = this.data.getLocalPosition(this.parent);
+            this.position.x = newPosition.x + offset.x;
+            this.position.y = newPosition.y + offset.y;
+        }
+    }
+
+    function dragCatStart(event)  {
+        this.data = event.data;
+        this.dragging = true;
+        offset.x = this.x - this.data.originalEvent.x;
+        offset.y = this.y - this.data.originalEvent.y;
+    }
+
+    function dragCatEnd()  {
+        this.dragging = false;
+        this.data = null;
+    }
+
+    function dragCat() {
+        if (this.dragging)  {
+            var newPosition = this.data.getLocalPosition(this.parent);
+            this.position.x = newPosition.x + offset.x;
+            this.position.y = newPosition.y + offset.y;
+        }
+    }
+
+
+
+
+
+
+    // ---------------------------------------------------------
+    //
+    //    shared code
+    //
+    // ---------------------------------------------------------
+
     function createCanvas() {
 
         renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
         renderer.backgroundColor = 0xCCCCCC;
         stage = new PIXI.Container();
-        texture = PIXI.Texture.fromImage('../img/iPhone5.png');
 
         $("body").prepend(renderer.view);
 
@@ -249,29 +312,8 @@ var Party = function() {
         requestAnimationFrame(render);
     }
 
-    function onDragStart(event)  {
-        this.data = event.data;
-        this.alpha = 1;
-        this.dragging = true;
-        //offset.x =
-        //console.log(this.x, this.y);
-        offset.x = this.x - this.data.originalEvent.x;
-        offset.y = this.y - this.data.originalEvent.y;
-    }
 
-    function onDragEnd()  {
-        this.alpha = 1;
-        this.dragging = false;
-        this.data = null;
-    }
 
-    function onDragMove() {
-        if (this.dragging)  {
-            var newPosition = this.data.getLocalPosition(this.parent);
-            this.position.x = newPosition.x + offset.x;
-            this.position.y = newPosition.y + offset.y;
-        }
-    }
 
 
 
