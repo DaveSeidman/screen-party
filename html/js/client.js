@@ -127,7 +127,7 @@ var Party = function() {
         }
     }
 
-    screenMovement(event) {
+    function screenMovement(event) {
         var absX = Math.abs(event.acceleration.x);
 
         if(absX > .25 || Math.abs(event.acceleration.y) > .25) {
