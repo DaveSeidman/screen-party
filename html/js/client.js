@@ -214,6 +214,18 @@ var Party = function() {
         basicText.scale.set(0.75);
         sprite.addChild(basicText);
 
+        var accelTextX = new PIXI.Text("accelX");
+        accelTextX.x = 20;
+        accelTextX.y = 20;
+        accelTextX.scale.set(0.5);
+        sprite.addChild(accelTextX);
+
+        var accelTexty = new PIXI.Text("accelX");
+        accelTexty.x = 100;
+        accelTexty.y = 20;
+        accelTexty.scale.set(0.5);
+        sprite.addChild(accelTexty);
+
         var screen = new Screen(data.id, sprite, randX, randY, data.width, data.height, data.orientation);
         party.screens.push(screen);
     }
@@ -223,6 +235,8 @@ var Party = function() {
         //console.log("a screen moved", data.movement.x);
         for(var i = 0; i < party.screens.length; i++) {   // these loops should be replaced with associative arrays, the key being the socket id
             var screen = party.screens[i];
+            screen.sprite.children[2].text = "x:" + data.movement.x.toPrecision(4);
+            screen.sprite.children[3].text = "y:" + data.movement.y.toPrecision(4);
             if(screen.socket.substring(2) == data.socket) {
                 screen.sprite.x += data.movement.x * 2;
                 screen.sprite.y += data.movement.y * 2;
