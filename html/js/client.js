@@ -127,23 +127,25 @@ var Party = function() {
         }
     }
 
-    function screenMovement(event) {
-          var absX = Math.abs(event.acceleration.x);
-          if(absX > .25 || Math.abs(event.acceleration.y) > .25) {
-              if(absX>lastX){
-                  lastX = absX;
-                   party.socket.emit('motion',
-                  {
-                      room:party.roomID,
-                      socket:party.socket.id,
-                      movement: {
-                          x: -event.acceleration.x,
-                          y: event.acceleration.y
-                      }
-                  });
-              }
-          }
-      }
+    screenMovement(event) {
+        var absX = Math.abs(event.acceleration.x);
+
+        if(absX > .25 || Math.abs(event.acceleration.y) > .25) {
+
+            if(absX>lastX){
+                party.socket.emit('motion',
+                {
+                    room:party.roomID,
+                    socket:party.socket.id,
+                    movement: {
+                        x: -event.acceleration.x,
+                        y: event.acceleration.y
+                    }
+                });
+            }
+        }
+        lastX = absX;
+    }
 
     function assetMovement() {
 
