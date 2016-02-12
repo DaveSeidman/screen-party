@@ -120,32 +120,13 @@ var Party = function() {
                 room:party.roomID,
                 socket:party.socket.id,
                 movement: {
-                    x: -event.acceleration.x,
+                    x: event.acceleration.x,
                     y: event.acceleration.y
                 }
             });
         }
     }
 
-    function screenMovement(event) {
-        var absX = Math.abs(event.acceleration.x);
-
-        if(absX > .25 || Math.abs(event.acceleration.y) > .25) {
-
-            if(absX>lastX){
-                party.socket.emit('motion',
-                {
-                    room:party.roomID,
-                    socket:party.socket.id,
-                    movement: {
-                        x: -event.acceleration.x,
-                        y: event.acceleration.y
-                    }
-                });
-            }
-        }
-        lastX = absX;
-    }
 
     function assetMovement() {
 
@@ -247,21 +228,27 @@ var Party = function() {
         accelTexty.scale.set(0.5);
         sprite.addChild(accelTexty);
 
-        var screen = new Screen(data.id, sprite, randX, randY, data.width, data.height, data.orientation);
+        var screen = new Screen(data.id, sprite, { x:0, y:0 }, { x:0, y:0 }, { x:0, y:0 }, data.width, data.height, data.orientation);
         party.screens.push(screen);
     }
 
     function moveScreen(data) {
 
-        //console.log("a screen moved", data.movement.x);
+        //console.log(data.movement.x);
         for(var i = 0; i < party.screens.length; i++) {   // these loops should be replaced with associative arrays, the key being the socket id
             var screen = party.screens[i];
-            screen.sprite.children[2].text = "x:" + data.movement.x.toPrecision(4);
-            screen.sprite.children[3].text = "y:" + data.movement.y.toPrecision(4);
-            if(screen.socket.substring(2) == data.socket) {
-                screen.sprite.x += data.movement.x * 2;
-                screen.sprite.y += data.movement.y * 2;
-            }
+
+            screen.velocity.x = screen.prevVelocity.x + data.movement.x;
+            screen.velocity.y = screen.prevVelocity.y + data.movement.y;
+
+            screen.sprite.x += screen.velocity.x;
+            screen.sprite.y += screen.velocity.y;
+
+            screen.prevVelocity.x = screen.velocity.x;
+            screen.prevVelocity.y = screen.velocity.y;
+
+            //screen.sprite.x = screen.position.x;
+            //screen.sprite.y = screen.position.y;
         }
     }
 
@@ -296,6 +283,7 @@ var Party = function() {
             var newPosition = this.data.getLocalPosition(this.parent);
             this.position.x = newPosition.x + offset.x;
             this.position.y = newPosition.y + offset.y;
+
         }
     }
 
@@ -348,21 +336,18 @@ var Party = function() {
     }
 
 
-
-
-
-
     return party;
 
 } ();
 
 
-var Screen = function(socket, sprite, x, y, width, height, orientation) {
+var Screen = function(socket, sprite, position, velocity, prevVelocity, width, height, orientation) {
 
     this.socket = socket;
     this.sprite = sprite;
-    this.x = x;
-    this.y = y;
+    this.position = position;
+    this.velocity = velocity;
+    this.prevVelocity = prevVelocity;
     this.width = width;
     this.height = height;
     this.orientation = orientation;

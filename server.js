@@ -10,6 +10,11 @@ var fs = require('fs');
 
 var rooms = []; // maintain a list of rooms
 var hosts = []; // maintain a list of hosts for each room
+// todo, maybe maintain a list of screens as well,
+// we kind of have an array of sockets per room but it
+// might be more efficient (wouldn't need to loop and find by id)
+// to store arrays of screens inside of rooms array
+
 
 var os = require('os');
 var ifaces = os.networkInterfaces();
