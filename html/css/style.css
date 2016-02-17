@@ -13,6 +13,7 @@ html, body {
 
 .wrap {
   display:flex;
+  /*position:absolute;*/
   flex-direction: row;
   flex-wrap:wrap;
   width:100%;

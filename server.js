@@ -74,6 +74,7 @@ io.on('connection', function (socket) {
         socket.join(_roomID);
         socket.emit('roomCreated', { id: _roomID, ip:ipAddr });
         socket.on('addCat', hostAddedCat);
+        socket.on('moveCat', hostMovedCat);
         console.log("room created, there are now " + Object.keys(rooms).length + " rooms.");
     }
 
@@ -112,7 +113,15 @@ function createParty(data) {
 
 function hostAddedCat(data) {
 
-    console.log("cat added", data);
+    console.log("cat added in room", data.roomID, rooms[data.roomID]);
+    io.to([data.roomID]).emit('addCatToScreens');
+
+}
+
+function hostMovedCat(data) {
+
+    //console.log("hose moved a cat", data.room, data.position.x, data.position.y);
+    io.to([data.room]).emit('moveCat', data);
 }
 
 

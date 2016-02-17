@@ -74,9 +74,9 @@ var Party = function() {
             party.socket.on('roomFound', roomFound);
             party.socket.on('roomNotFound', roomNotFound);
             party.socket.on('hostLeft', hostLeft);
+            party.socket.on('addCatToScreens', addCatScreen);
+            party.socket.on('moveCat', moveCatScreen);
         }
-
-
 
 
         // -----------------------------------------
@@ -84,14 +84,17 @@ var Party = function() {
         // -----------------------------------------
 
         else { // create a new room
-            createCanvas();
+
             party.socket = io.connect(ipAddress + ':80', { transports: ['websocket'] });
             party.socket.on('roomCreated', roomCreated);
             party.socket.on('clientLeft', removeScreen);
             party.socket.on('clientAdded', addScreen);
             party.socket.on('screenMoved', moveScreen);
-            $catBtn.on('click', addCat);
+            $catBtn.on('click', addCatHost);
         }
+
+
+        createCanvas();
     }
 
 
@@ -127,6 +130,25 @@ var Party = function() {
         }
     }
 
+    function addCatScreen() {
+
+        var texture = PIXI.Texture.fromImage('../img/catPhoto.jpg');
+        var sprite = new PIXI.Sprite(texture);
+        //sprite.interactive = true;
+        //sprite.buttonMode = true;
+        sprite.anchor.set(0.5);
+        sprite.alpha = .5;
+        sprite.x = 0;
+        sprite.y = 0;
+
+        stage.addChild(sprite);
+
+    }
+
+    function moveCatScreen(data) {
+
+        console.log("move the cat", data);
+    }
 
     function assetMovement() {
 
@@ -166,7 +188,7 @@ var Party = function() {
         $roomID.html((isLocal ? data.ip : ipAddress) + "/#" + data.id);
     }
 
-    function addCat() {
+    function addCatHost() {
         var texture = PIXI.Texture.fromImage('../img/catPhoto.jpg');
         var sprite = new PIXI.Sprite(texture);
         sprite.interactive = true;
@@ -241,8 +263,8 @@ var Party = function() {
             screen.velocity.x = screen.prevVelocity.x + data.movement.x;
             screen.velocity.y = screen.prevVelocity.y + data.movement.y;
 
-            screen.sprite.x += screen.velocity.x;
-            screen.sprite.y += screen.velocity.y;
+            //screen.sprite.x += screen.velocity.x;
+            //screen.sprite.y += screen.velocity.y;
 
             screen.prevVelocity.x = screen.velocity.x;
             screen.prevVelocity.y = screen.velocity.y;
@@ -304,6 +326,16 @@ var Party = function() {
             var newPosition = this.data.getLocalPosition(this.parent);
             this.position.x = newPosition.x + offset.x;
             this.position.y = newPosition.y + offset.y;
+
+            party.socket.emit('moveCat',
+            {
+                room:party.roomID,
+                socket:party.socket.id,
+                position: {
+                    x: this.position.x,
+                    y: this.position.y
+                }
+            });
         }
     }
 
