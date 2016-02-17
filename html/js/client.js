@@ -148,6 +148,7 @@ var Party = function() {
     function moveCatScreen(data) {
 
         console.log("move the cat", data);
+
     }
 
     function assetMovement() {
