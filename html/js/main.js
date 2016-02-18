@@ -3,16 +3,6 @@
 var Party = function() {
 
     var party = {};
-    //var $wrap;
-    var $roomID;
-    var $clientID;
-    var $catBtn;
-    //var ipAddress;
-    var renderer;
-    var stage;
-    var texture;
-    var lastX = 0;
-
 
     $(document).on('ready', function() {
 
@@ -66,12 +56,7 @@ var Party = function() {
             party.socket.on('clientAdded', host.addScreen);
             party.socket.on('screenMoved', host.moveScreen);
         }
-
-        //createCanvas();
     }
-
-
-
 
     return party;
 
