@@ -1,3 +1,14 @@
+// todo, maybe maintain a list of screens as well,
+// we kind of have an array of sockets per room but it
+// might be more efficient (wouldn't need to loop and find by id)
+// to store arrays of screens inside of rooms array
+
+
+// color scheme:
+//   gray = server only
+//   cyan = host
+//   green = client
+
 'use strict';
 
 var party = require('./screenparty');  // try to offload game logic to this class
@@ -5,34 +16,32 @@ var app = require('express')();
 var express = require('express');
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
-//var multer = require('multer');
-var fs = require('fs');
-
-var rooms = []; // maintain a list of rooms
-var hosts = []; // maintain a list of hosts for each room
-// todo, maybe maintain a list of screens as well,
-// we kind of have an array of sockets per room but it
-// might be more efficient (wouldn't need to loop and find by id)
-// to store arrays of screens inside of rooms array
-
-
 var os = require('os');
+var fs = require('fs');
+var colors = require('colors');
 var ifaces = os.networkInterfaces();
 var ipAddr;
 var configFile = './html/config.json';
 var config = require(configFile);
 
+var rooms = []; // maintain a list of rooms
+var hosts = []; // maintain a list of hosts for each room
+
 
 server.listen(80);
 app.use('/', express.static('html/'));
 
-console.log("starting server on port 80");
+console.log(colors.gray("starting server on port 80"));
 
 io.on('connection', function (socket) {
 
-    console.log("incoming connection");
+    console.log(colors.gray("incoming connection", socket.id));
 
     if(socket.request._query.roomID) { // there was a hash, meaning a client is trying to enter a room
+
+        // ------------------------
+        //   client code
+        // ----------------------
 
         var _roomID = socket.request._query.roomID;
         var _agent = socket.request._query.agent; // get the client's browser type (or device type hopefully);
@@ -40,24 +49,30 @@ io.on('connection', function (socket) {
         var _height = socket.request._query.height;
         var _orientation = socket.request._query.orientation;
 
-        console.log("Client trying to join existing room", _roomID, _agent, _width, _height, _orientation);
+        console.log(colors.green("client trying to join existing room", _roomID));
+        console.log(colors.green("-- screen resolution:", _width, "x", _height));
+        console.log(colors.green("-- user agent:", _agent));
+
         if(rooms[_roomID]) { // room exists
 
-            console.log("room found");
+            console.log(colors.gray("room found"));
             socket.join(_roomID);
-            hosts[_roomID].emit('clientAdded',
-            {
+            var clientAmount = io.sockets.adapter.rooms[_roomID].length;
+            hosts[_roomID].emit('clientAdded', {
                 id: socket.id,
+                id2: clientAmount,
                 agent:_agent,
                 width:_width,
                 height:_height,
                 orientation:_orientation
             });
+            console.log(colors.gray("there are now", clientAmount, "sockets in room", _roomID, "including the host"));
             socket.emit('roomFound');
             socket.on('motion', screenMoved);
+            //socket.on('buttonPressed', screenButtonPressed);
         }
         else {  // room doesn't exist
-            console.log("room not found");
+            console.log(colors.red("room not found"));
             socket.emit('roomNotFound');
         }
     }
@@ -68,21 +83,58 @@ io.on('connection', function (socket) {
         // ----------------------
 
         _roomID = Math.floor(Math.random()*900) + 100; // add check to make sure this isn't already in rooms array
-        console.log("no roomID found, creating one", _roomID);
         rooms[_roomID] = _roomID;
         hosts[_roomID] = socket;
         socket.join(_roomID);
         socket.emit('roomCreated', { id: _roomID, ip:ipAddr });
         socket.on('addCat', hostAddedCat);
         socket.on('moveCat', hostMovedCat);
-        console.log("room created, there are now " + Object.keys(rooms).length + " rooms.");
+        console.log(colors.cyan("no roomID found, creating one", _roomID));
+        console.log(colors.cyan("there are now", Object.keys(rooms).length, "rooms"));
+
     }
 
     socket.on('disconnect', function() {
 
-        for(var id in hosts) {
+        console.log(colors.gray("disconnecting"));
+        var rooms = this.adapter.rooms;
+        var roomID = Object.keys(rooms)[0];
+        var socketsInRoom = io.sockets.adapter.rooms[roomID].sockets;
 
-            // console.log("---", hosts[id].id);
+        var i = 0;
+        for(var socket in socketsInRoom) {
+            console.log(socket, this.id);
+            if(socket == this.id) {
+                if(i == 0) {
+                    console.log(colors.cyan("host is disconnecting"));
+                    socket.to(roomID).emit('hostLeft');
+                    delete rooms[roomID];
+                }
+                else {
+                    console.log(colors.green("client is disconnecting"));
+                    hosts[roomID].emit('clientLeft', { id: client });
+                }
+                break;
+            }
+            i++;
+        }
+
+
+    //    console.log(socketsInRoom, this.id);
+
+        /*if(socketsInRoom[0] == this.id) {
+            console.log(colors.cyan("host is disconnecting"));
+            socket.to(roomID).emit('hostLeft');
+            delete rooms[roomID];
+        }
+        else {
+            console.log(colors.green("client is disconnecting"));
+            //console.log(hosts[roomID]);
+            //hosts[roomID].emit('clientLeft', { id: client });
+        }*/
+
+        /*for(var id in hosts) {
+
             if(hosts[id].id == socket.id) {
                 console.log("the host is disconnecting");
                 socket.to(rooms[id]).emit('hostLeft');
@@ -95,7 +147,7 @@ io.on('connection', function (socket) {
                 if(hosts[_roomID]) hosts[_roomID].emit('clientLeft', { id: socket.id });
             }
         }
-        console.log("there are " + Object.keys(rooms).length + " rooms remaining");
+        console.log("there are " + Object.keys(rooms).length + " rooms remaining");*/
     });
 });
 
@@ -104,11 +156,6 @@ io.on('connection', function (socket) {
 function screenMoved(data) {
     // tell the host to move the screen
     hosts[data.room].emit('screenMoved', data);
-}
-
-
-function createParty(data) {
-    console.log("client asked to start a new party", data);
 }
 
 function hostAddedCat(data) {
@@ -138,10 +185,10 @@ Object.keys(ifaces).forEach(function (ifname) {
         }
         else {
             ipAddr = iface.address;
-            console.log(config);
+            //console.log(config);
             config.network.ip = ipAddr;
             fs.writeFile(configFile, JSON.stringify(config, null, 2), function(e) { // can probably delete 'e'
-                console.log("updated config file with IP address");
+                console.log(colors.gray("updated config file with IP address"));
             });
         }
         ++alias;

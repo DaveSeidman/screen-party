@@ -29,7 +29,6 @@ var Host = function(party) {
     }
 
 
-
     host.addScreen = function(data) {
 
         console.log("HOST - addScreen");
@@ -57,71 +56,68 @@ var Host = function(party) {
         sprite.addChild(graphics);
         stage.addChild(sprite);
 
+        var myID = data.id2;
         var basicText = new PIXI.Text(
-            data.id, {
+            myID, {
                 font : '12px Arial',
                 align : 'center',
                 width : data.width,
                 y: data.height/2
             });
 
-        // basicText.font = '12px Arial';
-        // basicText.x = 20;
-        // basicText.y = data.height/2;
-        //basicText.width = data.width;
-        //basicText.align = 'center';
-        //basicText.scale.set(0.75);
         sprite.addChild(basicText);
 
-        // var accelTextX = new PIXI.Text("accelX");
-        // accelTextX.x = 20;
-        // accelTextX.y = 20;
-        // accelTextX.scale.set(0.5);
-        // sprite.addChild(accelTextX);
-        //
-        // var accelTexty = new PIXI.Text("accelX");
-        // accelTexty.x = 100;
-        // accelTexty.y = 20;
-        // accelTexty.scale.set(0.5);
-        // sprite.addChild(accelTexty);
-
-        var screen = new Screen(data.id, sprite, { x:0, y:0 }, { x:0, y:0 }, { x:0, y:0 }, data.width, data.height, data.orientation);
+        var screen = new Screen(myID, data.id, sprite, { x:0, y:0 }, { x:0, y:0 }, { x:0, y:0 }, data.width, data.height, data.orientation);
+        //console.log(screen);
         host.screens.push(screen);
     }
 
+    host.removeScreen = function(data) {
+
+        console.log("remove screen", data);
+        //for(var i = 0; i < host.screens.length; i++) {   // these loops should be replaced with associative arrays, the key being the socket id
+
+            //var screen = host.screens[i];
+            //    console.log("checking id of client", data.id, "against all screen id's", screen.socket);
+            //if(screen.socket == data.id) {
+                // this is a clean way to remove the screen from the array
+                //var matchedScreen = host.screens.splice(i,1)[0];
+                //stage.removeChild(matchedScreen.sprite);
+
+                // but I'd like to keep the array positions of all screens so I'll do this instead
+            //    stage.removeChild(screen);
+            //    screen = null;
+                // so that if screen 3 leaves, screen 4 retains it's position and doesn't become the 3rd screen
+            //    break;
+            //}
+        //}
+    }
+
+
     host.moveScreen = function(data) {
 
+        //console.log(data);
         //console.log(data.movement.x);
         for(var i = 0; i < host.screens.length; i++) {   // these loops should be replaced with associative arrays, the key being the socket id
             var screen = host.screens[i];
 
-            screen.velocity.x = screen.prevVelocity.x + data.movement.x;
-            screen.velocity.y = screen.prevVelocity.y + data.movement.y;
+            //screen.velocity.x = screen.prevVelocity.x + data.movement.x;
+            screen.velocity += data.movement.x/100;
+            //screen.velocity.y = screen.prevVelocity.y + data.movement.y;
 
-            //screen.sprite.x += screen.velocity.x;
+            screen.sprite.x += screen.velocity.x;
+        //    console.log(data.movement.x, screen.velocity.x, screen.sprite.x);
+
             //screen.sprite.y += screen.velocity.y;
 
-            screen.prevVelocity.x = screen.velocity.x;
-            screen.prevVelocity.y = screen.velocity.y;
+            //screen.prevVelocity.x = screen.velocity.x;
+            //screen.prevVelocity.y = screen.velocity.y;
 
             //screen.sprite.x = screen.position.x;
             //screen.sprite.y = screen.position.y;
         }
     }
 
-    host.removeScreen = function(data) {
-
-        for(var i = 0; i < host.screens.length; i++) {   // these loops should be replaced with associative arrays, the key being the socket id
-
-            var screen = host.screens[i];
-            //    console.log("checking id of client", data.id, "against all screen id's", screen.socket);
-            if(screen.socket == data.id) {
-                var matchedScreen = host.screens.splice(i,1)[0];
-                stage.removeChild(matchedScreen.sprite);
-                break;
-            }
-        }
-    }
 
 
 
@@ -214,7 +210,7 @@ var Host = function(party) {
         }
     }
 
-    var Screen = function(socket, sprite, position, velocity, prevVelocity, width, height, orientation) {
+    var Screen = function(id, socket, sprite, position, velocity, prevVelocity, width, height, orientation) {
 
         this.socket = socket;
         this.sprite = sprite;

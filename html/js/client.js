@@ -16,9 +16,15 @@ var Client = function(party) {
 
     client.roomFound = function(data) {
 
-        var $clientID = $('<h1>');
-        $clientID.html(party.socket.id);
-        party.$wrap.append($clientID);
+        // var $clientID = $('<h1>');
+        // $clientID.html(party.socket.id);
+        // party.$wrap.append($clientID);
+
+        var bitmapText = new PIXI.Text(party.socket.id, {font: "60px Arial"});
+        bitmapText.x = 50;
+        bitmapText.y = 50;
+
+        stage.addChild(bitmapText);
         window.addEventListener('devicemotion', screenMovement);
     }
     client.roomNotFound = function() {
@@ -42,21 +48,16 @@ var Client = function(party) {
 
         var texture = PIXI.Texture.fromImage('../img/catPhoto.jpg');
         var sprite = new PIXI.Sprite(texture);
-        //sprite.interactive = true;
-        //sprite.buttonMode = true;
         sprite.anchor.set(0.5);
         sprite.alpha = .5;
         sprite.x = 0;
         sprite.y = 0;
-
         stage.addChild(sprite);
-
     }
 
     client.moveCatScreen = function(data) {
 
         console.log("move the cat", data);
-
     }
 
     client.assetMovement = function() {
@@ -87,10 +88,11 @@ var Client = function(party) {
 
     function screenMovement(event) {
 
-        if(Math.abs(event.acceleration.x) > .25 || Math.abs(event.acceleration.y) > .25) {
+        if(Math.abs(event.acceleration.x) > 0.25 || Math.abs(event.acceleration.y) > 0.25) {
             party.socket.emit('motion',
             {
                 room:client.roomID,
+                //id:
                 socket:party.socket.id,
                 movement: {
                     x: event.acceleration.x,

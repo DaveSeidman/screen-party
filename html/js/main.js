@@ -1,5 +1,17 @@
 'use strict';
 
+// Program flow:
+// go to index.html/[no hash]
+// -- You become a host, a has is assigned
+
+// go to index.html/[hash]
+// -- Lookup this hash, if found, you are a client
+
+
+
+
+
+
 var Party = function() {
 
     var party = {};
