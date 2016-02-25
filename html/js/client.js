@@ -16,32 +16,24 @@ var Client = function(party) {
 
     client.roomFound = function(data) {
 
-        // var $clientID = $('<h1>');
-        // $clientID.html(party.socket.id);
-        // party.$wrap.append($clientID);
-
-        var bitmapText = new PIXI.Text(party.socket.id, {font: "60px Arial"});
-        bitmapText.x = 50;
-        bitmapText.y = 50;
-
-        stage.addChild(bitmapText);
-        window.addEventListener('devicemotion', screenMovement);
+        clearStage()
+        var idText = new PIXI.Text(party.socket.id, { font : '12px Arial' });
+        stage.addChild(idText);
+        // window.addEventListener('devicemotion', screenMovement);
     }
     client.roomNotFound = function() {
 
-        console.log("CLIENT - roomNotFound");
-        var $clientID = $('<h2>');
-        $clientID.html("Room Not Found!");
-        party.$wrap.append($clientID);
+        clearStage();
+        var infoText = new PIXI.Text('Room Not Found', { font : '12px Arial' });
+        stage.addChild(infoText);
     }
 
     client.hostLeft = function() {
 
-        var $clientID = $('<h2>');
-        $clientID.html("Host has left");
-        party.$wrap.append($clientID);
+        clearStage();
+        var infoText = new PIXI.Text('Host Has Left', { font : '12px Arial' });
+        stage.addChild(infoText);
     }
-
 
 
     client.addCatScreen = function() {
@@ -65,6 +57,10 @@ var Client = function(party) {
 
     }
 
+    function clearStage() {
+
+        for (var i = stage.children.length - 1; i >= 0; i--) {	stage.removeChild(stage.children[i]);};
+    }
 
 
 

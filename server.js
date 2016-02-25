@@ -97,7 +97,7 @@ io.on('connection', function (socket) {
     socket.on('disconnect', function() {
 
         console.log(colors.gray("disconnecting"));
-        var rooms = this.adapter.rooms;
+    /*    var rooms = this.adapter.rooms;
         var roomID = Object.keys(rooms)[0];
         var socketsInRoom = io.sockets.adapter.rooms[roomID].sockets;
 
@@ -117,7 +117,7 @@ io.on('connection', function (socket) {
                 break;
             }
             i++;
-        }
+        }*/
 
 
     //    console.log(socketsInRoom, this.id);
@@ -133,12 +133,12 @@ io.on('connection', function (socket) {
             //hosts[roomID].emit('clientLeft', { id: client });
         }*/
 
-        /*for(var id in hosts) {
-
+        for(var id in hosts) {
             if(hosts[id].id == socket.id) {
                 console.log("the host is disconnecting");
                 socket.to(rooms[id]).emit('hostLeft');
                 delete rooms[id];
+                delete hosts[id];
                 break;
             }
             else {
@@ -147,7 +147,7 @@ io.on('connection', function (socket) {
                 if(hosts[_roomID]) hosts[_roomID].emit('clientLeft', { id: socket.id });
             }
         }
-        console.log("there are " + Object.keys(rooms).length + " rooms remaining");*/
+        console.log("there are " + Object.keys(rooms).length + " rooms remaining");
     });
 });
 
