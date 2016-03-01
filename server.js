@@ -160,9 +160,8 @@ function screenMoved(data) {
 
 function hostAddedCat(data) {
 
-    console.log("cat added in room", data.roomID, rooms[data.roomID]);
+    console.log(colors.cyan("cat added in room", data.roomID));
     io.to([data.roomID]).emit('addCatToScreens');
-
 }
 
 function hostMovedCat(data) {

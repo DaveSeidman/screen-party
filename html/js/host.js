@@ -10,13 +10,9 @@ var Host = function(party) {
 
     var offset = { x:0, y:0 }; // used when dragging screens
     var stage;
+    var container;
 
     host.createRoom = function() {
-
-        var $catBtn = $('<button>');
-        $catBtn.html('Add Cat');
-        $catBtn.on('click', addCatHost);
-        party.$wrap.append($catBtn);
 
         createCanvas();
     }
@@ -25,12 +21,11 @@ var Host = function(party) {
     host.roomCreated = function(data) {
 
         host.roomID = data.id;
+        clearStage();
         var roomText = new PIXI.Text(party.ipAddress + '/#' + host.roomID, { font : '12px Arial' });
         stage.addChild(roomText);
 
-        //var $roomID = $('<h1>');
-        //$roomID.html((party.isLocal ? data.ip : party.ipAddress) + "/#" + data.id);
-        //party.$wrap.append($roomID);
+        $(document).on('keypress', function() { if(event.code == "KeyC") addCat(); });
 
     }
 
@@ -122,7 +117,23 @@ var Host = function(party) {
 
     // private methods
 
-    addCatHost = function() {
+    function clearStage() {
+
+        for (var i = stage.children.length - 1; i >= 0; i--) {	stage.removeChild(stage.children[i]);};
+    }
+
+    createCanvas = function() {
+        renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
+        renderer.backgroundColor = 0xCCCCCC;
+        stage = new PIXI.Container();
+        container = new PIXI.Container();
+        stage.addChild(container);
+        $("body").prepend(renderer.view);
+
+        render();
+    }
+
+    addCat = function() {
         var texture = PIXI.Texture.fromImage('../img/catPhoto.jpg');
         var sprite = new PIXI.Sprite(texture);
         sprite.interactive = true;
@@ -136,19 +147,9 @@ var Host = function(party) {
         .on('mouseup', dragCatEnd)
         .on('mouseupoutside', dragCatEnd)
         .on('mousemove', dragCat);
-        stage.addChild(sprite);
+        container.addChild(sprite);
         //console.log(host.roomID);
         party.socket.emit('addCat', { roomID: host.roomID });
-    }
-
-    createCanvas = function() {
-        renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
-        renderer.backgroundColor = 0xCCCCCC;
-        stage = new PIXI.Container();
-
-        $("body").prepend(renderer.view);
-
-        render();
     }
 
     render = function() {

@@ -16,6 +16,8 @@ var Party = function() {
 
     var party = {};
 
+
+
     $(document).on('ready', function() {
 
         party.$wrap = $('.wrap');
@@ -38,7 +40,7 @@ var Party = function() {
         if(window.location.hash) { // client trying to join a room
 
             var client = new Client(party);
-
+            party.client = client;
             var agent = getAgent();
             party.socket = io.connect(party.ipAddress + ':80', {
                 transports: ['websocket'],
@@ -61,6 +63,7 @@ var Party = function() {
         else { // create a new room
 
             var host = new Host(party);
+            party.host = host;
             host.createRoom();
             party.socket = io.connect(party.ipAddress + ':80', { transports: ['websocket'] });
             party.socket.on('roomCreated', host.roomCreated);
