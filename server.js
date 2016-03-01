@@ -193,9 +193,8 @@ Object.keys(ifaces).forEach(function (ifname) {
         }
         else {
             ipAddr = iface.address;
-            //console.log(config);
             config.network.ip = ipAddr;
-            fs.writeFile(configFile, JSON.stringify(config, null, 2), function(e) { // can probably delete 'e'
+            fs.writeFile(configFile, JSON.stringify(config, null, 2), function() { // can probably delete 'e'
                 console.log(colors.gray("updated config file with IP address"));
             });
         }
