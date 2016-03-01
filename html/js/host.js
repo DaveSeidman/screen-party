@@ -11,6 +11,7 @@ var Host = function(party) {
     var offset = { x:0, y:0 }; // used when dragging screens
     var stage;
     var container;
+    var roomText;
 
     host.createRoom = function() {
 
@@ -21,8 +22,9 @@ var Host = function(party) {
     host.roomCreated = function(data) {
 
         host.roomID = data.id;
-        clearStage();
-        var roomText = new PIXI.Text(party.ipAddress + '/#' + host.roomID, { font : '12px Arial' });
+        //clearStage();
+        stage.removeChild(roomText);
+        roomText = new PIXI.Text(party.ipAddress + '/#' + host.roomID, { font : '12px Arial' });
         stage.addChild(roomText);
 
         $(document).on('keypress', function() { if(event.code == "KeyC") addCat(); });
@@ -34,8 +36,8 @@ var Host = function(party) {
 
         console.log("HOST - addScreen");
 
-        var randX = Math.random() * window.innerWidth;
-        var randY = Math.random() * window.innerHeight;
+        var randX = Math.random() * (window.innerWidth - 200) + 100;
+        var randY = Math.random() * (window.innerHeight - 200) + 100;
 
         var graphics = new PIXI.Graphics();
         graphics.lineStyle(20, 0x000000, 1);
@@ -50,20 +52,30 @@ var Host = function(party) {
         .on('mousedown', dragScreenStart)
         .on('mouseup', dragScreenEnd)
         .on('mouseupoutside', dragScreenEnd)
-        .on('mousemove', dragScreen);
+        .on('mousemove', dragScreen); // To Do: this will result in too many listeners, add and remove as necessary
         sprite.position.x = randX;
         sprite.position.y = randY;
 
         sprite.addChild(graphics);
+        sprite.screenID = data.id;
         stage.addChild(sprite);
 
         var myID = data.id2;
         var basicText = new PIXI.Text(data.id.substring(2), { font : '12px Arial' });
         sprite.addChild(basicText);
 
-        var screen = new Screen(myID, data.id, sprite, { x:0, y:0 }, { x:0, y:0 }, { x:0, y:0 }, data.width, data.height, data.orientation);
+        var screen = new Screen(myID, data.id, sprite, { x:randX, y:randY }, { x:0, y:0 }, { x:0, y:0 }, data.width, data.height, data.orientation);
         //console.log(screen);
         host.screens.push(screen);
+
+        party.socket.emit('moveScreen', {
+            screenID : data.id,
+            offset : {
+                x : randX,
+                y : randY
+            }
+        });
+
     }
 
     host.removeScreen = function(data) {
@@ -117,16 +129,13 @@ var Host = function(party) {
 
     // private methods
 
-    function clearStage() {
-
-        for (var i = stage.children.length - 1; i >= 0; i--) {	stage.removeChild(stage.children[i]);};
-    }
-
     createCanvas = function() {
+
         renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
+        console.clear();
         renderer.backgroundColor = 0xCCCCCC;
-        stage = new PIXI.Container();
-        container = new PIXI.Container();
+        host.stage = stage = new PIXI.Container();
+        host.container = container = new PIXI.Container();
         stage.addChild(container);
         $("body").prepend(renderer.view);
 
@@ -134,22 +143,25 @@ var Host = function(party) {
     }
 
     addCat = function() {
+
+        party.socket.emit('addCat', { roomID: host.roomID });
+
         var texture = PIXI.Texture.fromImage('../img/catPhoto.jpg');
         var sprite = new PIXI.Sprite(texture);
         sprite.interactive = true;
         sprite.buttonMode = true;
         sprite.anchor.set(0.5);
         sprite.alpha = .5;
-        sprite.x = -400;
-        sprite.y = -400;
+        sprite.x = 0;
+        sprite.y = 0;
         sprite
         .on('mousedown', dragCatStart)
         .on('mouseup', dragCatEnd)
         .on('mouseupoutside', dragCatEnd)
         .on('mousemove', dragCat);
-        container.addChild(sprite);
+        host.container.addChild(sprite);
+        console.log(container.children.length)
         //console.log(host.roomID);
-        party.socket.emit('addCat', { roomID: host.roomID });
     }
 
     render = function() {
@@ -165,18 +177,23 @@ var Host = function(party) {
         offset.x = this.x - this.data.originalEvent.x;
         offset.y = this.y - this.data.originalEvent.y;
     }
-
     function dragScreenEnd()  {
         this.dragging = false;
         this.data = null;
     }
-
     function dragScreen() {
         if (this.dragging)  {
             var newPosition = this.data.getLocalPosition(this.parent);
             this.position.x = newPosition.x + offset.x;
             this.position.y = newPosition.y + offset.y;
 
+            party.socket.emit('moveScreen', {
+                screenID : this.screenID,
+                offset : {
+                    x : this.position.x,
+                    y : this.position.y
+                }
+            });
         }
     }
 
@@ -186,12 +203,10 @@ var Host = function(party) {
         offset.x = this.x - this.data.originalEvent.x;
         offset.y = this.y - this.data.originalEvent.y;
     }
-
     function dragCatEnd()  {
         this.dragging = false;
         this.data = null;
     }
-
     function dragCat() {
         if (this.dragging)  {
             var newPosition = this.data.getLocalPosition(this.parent);
@@ -210,8 +225,8 @@ var Host = function(party) {
         }
     }
 
-    var Screen = function(id, socket, sprite, position, velocity, prevVelocity, width, height, orientation) {
 
+    var Screen = function(id, socket, sprite, position, velocity, prevVelocity, width, height, orientation) {
         this.socket = socket;
         this.sprite = sprite;
         this.position = position;

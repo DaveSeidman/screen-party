@@ -4,6 +4,9 @@ var Client = function(party) {
 
 
     var stage;
+    var container;
+    var roomText;
+    var cat;
 
     client.joinRoom = function() {
 
@@ -16,40 +19,50 @@ var Client = function(party) {
 
     client.roomFound = function(data) {
 
-        clearStage()
-        var idText = new PIXI.Text(party.socket.id, { font : '12px Arial' });
-        stage.addChild(idText);
+        stage.removeChild(roomText);
+        roomText = new PIXI.Text(party.socket.id, { font : '12px Arial' });
+        stage.addChild(roomText);
         // window.addEventListener('devicemotion', screenMovement);
     }
     client.roomNotFound = function() {
 
-        clearStage();
-        var infoText = new PIXI.Text('Room Not Found', { font : '12px Arial' });
-        stage.addChild(infoText);
+        stage.removeChild(roomText);
+        roomText = new PIXI.Text('Room Not Found', { font : '12px Arial' });
+        stage.addChild(roomText);
     }
 
     client.hostLeft = function() {
 
-        clearStage();
-        var infoText = new PIXI.Text('Host Has Left', { font : '12px Arial' });
-        stage.addChild(infoText);
+        stage.removeChild(roomText);
+        roomText = new PIXI.Text('Host Has Left', { font : '12px Arial' });
+        stage.addChild(roomText);
     }
 
 
     client.addCatScreen = function() {
 
         var texture = PIXI.Texture.fromImage('../img/catPhoto.jpg');
-        var sprite = new PIXI.Sprite(texture);
-        sprite.anchor.set(0.5);
-        sprite.alpha = .5;
-        sprite.x = 0;
-        sprite.y = 0;
-        stage.addChild(sprite);
+        //var sprite = new PIXI.Sprite(texture);
+        cat = new PIXI.Sprite(texture);
+        cat.anchor.set(0.5);
+        cat.alpha = .8;
+        cat.x = 0;
+        cat.y = 0;
+        container.addChild(cat);
     }
 
     client.moveCatScreen = function(data) {
 
-        console.log("move the cat", data);
+        //console.log("move the cat", data);
+        cat.position.x = data.position.x;
+        cat.position.y = data.position.y;
+    }
+
+    client.adjustContainer = function(data) {
+
+        // combine this and just use a point?
+        container.position.x = -data.offset.x;
+        container.position.y = -data.offset.y;
     }
 
     client.assetMovement = function() {
@@ -68,9 +81,11 @@ var Client = function(party) {
 
     function createCanvas() {
         renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
+        console.clear();
         renderer.backgroundColor = 0xCCCCCC;
-        stage = new PIXI.Container();
-
+        client.stage = stage = new PIXI.Container();
+        client.container = container = new PIXI.Container();
+        stage.addChild(container);
         $("body").prepend(renderer.view);
 
         render();

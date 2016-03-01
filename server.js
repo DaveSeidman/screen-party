@@ -68,7 +68,7 @@ io.on('connection', function (socket) {
             });
             console.log(colors.gray("there are now", clientAmount, "sockets in room", _roomID, "including the host"));
             socket.emit('roomFound');
-            socket.on('motion', screenMoved);
+            //socket.on('motion', screenMoved);
             //socket.on('buttonPressed', screenButtonPressed);
         }
         else {  // room doesn't exist
@@ -89,6 +89,9 @@ io.on('connection', function (socket) {
         socket.emit('roomCreated', { id: _roomID, ip:ipAddr });
         socket.on('addCat', hostAddedCat);
         socket.on('moveCat', hostMovedCat);
+
+        socket.on('moveScreen', moveScreen);
+
         console.log(colors.cyan("no roomID found, creating one", _roomID));
         console.log(colors.cyan("there are now", Object.keys(rooms).length, "rooms"));
 
@@ -153,9 +156,15 @@ io.on('connection', function (socket) {
 
 
 
-function screenMoved(data) {
+/*function screenMoved(data) {
     // tell the host to move the screen
     hosts[data.room].emit('screenMoved', data);
+}*/
+
+function moveScreen(data) {
+
+    // tell this screen to adjust it's container
+    io.to(data.screenID).emit('adjustContainer', data);
 }
 
 function hostAddedCat(data) {

@@ -9,9 +9,6 @@
 
 
 
-
-
-
 var Party = function() {
 
     var party = {};
@@ -59,6 +56,7 @@ var Party = function() {
             party.socket.on('hostLeft', client.hostLeft);
             party.socket.on('addCatToScreens', client.addCatScreen);
             party.socket.on('moveCat', client.moveCatScreen);
+            party.socket.on('adjustContainer', client.adjustContainer);
         }
         else { // create a new room
 
