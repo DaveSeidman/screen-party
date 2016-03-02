@@ -50,25 +50,7 @@ var Party = function() {
 
             var client = new Client(party);
             party.client = client;
-            var agent = getAgent();
-            party.socket = io.connect(party.ipAddress + ':80', {
-                transports: ['websocket'],
-                query:
-                "roomID=" + window.location.hash.substring(1) + "&" +
-                "agent=" + agent + "&" +
-                "width=" + window.innerWidth + "&" +
-                "height=" + window.innerHeight + "&" +
-                "orientation=" + window.orientation
-            });
 
-            client.roomID = window.location.hash.substring(1);
-            client.joinRoom();
-            party.socket.on('roomFound', client.roomFound);
-            party.socket.on('roomNotFound', client.roomNotFound);
-            party.socket.on('hostLeft', client.hostLeft);
-            party.socket.on('addCatToScreens', client.addCatScreen);
-            party.socket.on('moveCat', client.moveCatScreen);
-            party.socket.on('adjustContainer', client.adjustContainer);
         }
         else { // create a new room
 

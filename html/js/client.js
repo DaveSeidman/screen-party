@@ -8,38 +8,53 @@ var Client = function(party) {
     var roomText;
     var cat;
 
-    client.joinRoom = function() {
 
-        console.log("client joining room", client.roomID);
+    var agent = getAgent();
+    party.socket = io.connect(party.ipAddress + ':80', {
+        transports: ['websocket'],
+        query:
+        "roomID=" + window.location.hash.substring(1) + "&" +
+        "agent=" + agent + "&" +
+        "width=" + window.innerWidth + "&" +
+        "height=" + window.innerHeight + "&" +
+        "orientation=" + window.orientation
+    });
 
-        createCanvas();
-        //client.hash = window.location.hash.substring(1); // get hash minus the #
-    }
+    client.roomID = window.location.hash.substring(1);
+    party.socket.on('roomFound', roomFound);
+    party.socket.on('roomNotFound', roomNotFound);
+    party.socket.on('hostLeft', hostLeft);
+    party.socket.on('addSpriteToScreens', addSprite);
+    party.socket.on('moveCat', moveCatScreen);
+    party.socket.on('setYourself', setupScreen);
+    party.socket.on('adjustContainer', adjustContainer);
+    createCanvas();
 
+    function roomFound(data) {
 
-    client.roomFound = function(data) {
-
+        console.log("roomfound");
         stage.removeChild(roomText);
         roomText = new PIXI.Text(party.socket.id, { font : '12px Arial' });
         stage.addChild(roomText);
         // window.addEventListener('devicemotion', screenMovement);
     }
-    client.roomNotFound = function() {
+    function roomNotFound() {
 
         stage.removeChild(roomText);
         roomText = new PIXI.Text('Room Not Found', { font : '12px Arial' });
         stage.addChild(roomText);
     }
 
-    client.hostLeft = function() {
+    function hostLeft() {
 
         stage.removeChild(roomText);
+        empty(container);
         roomText = new PIXI.Text('Host Has Left', { font : '12px Arial' });
         stage.addChild(roomText);
     }
 
 
-    client.addCatScreen = function() {
+    function addSprite() {
 
         var texture = PIXI.Texture.fromImage('../img/catPhoto.jpg');
         //var sprite = new PIXI.Sprite(texture);
@@ -51,21 +66,29 @@ var Client = function(party) {
         container.addChild(cat);
     }
 
-    client.moveCatScreen = function(data) {
+    function moveCatScreen(data) {
 
         //console.log("move the cat", data);
         cat.position.x = data.position.x;
         cat.position.y = data.position.y;
     }
 
-    client.adjustContainer = function(data) {
+    function setupScreen(data) {
+
+        container.position.x = -data.offset.x;
+        container.position.y = -data.offset.y;
+
+        console.log(data.graphics);
+    }
+
+    function adjustContainer(data) {
 
         // combine this and just use a point?
         container.position.x = -data.offset.x;
         container.position.y = -data.offset.y;
     }
 
-    client.assetMovement = function() {
+    function assetMovement() {
 
 
     }
@@ -81,7 +104,7 @@ var Client = function(party) {
 
     function createCanvas() {
         renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
-        console.clear();
+        //console.clear();
         renderer.backgroundColor = 0xCCCCCC;
         client.stage = stage = new PIXI.Container();
         client.container = container = new PIXI.Container();
@@ -113,6 +136,13 @@ var Client = function(party) {
         }
     }
 
+
+    function empty(container) {
+
+        for (var i = container.children.length - 1; i >= 0; i--) {
+            container.removeChild(container.children[i]);
+        };
+    }
 
     return client;
 

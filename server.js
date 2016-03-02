@@ -87,10 +87,12 @@ io.on('connection', function (socket) {
         hosts[_roomID] = socket;
         socket.join(_roomID);
         socket.emit('roomCreated', { id: _roomID, ip:ipAddr });
-        socket.on('addCat', hostAddedCat);
+        socket.on('addSprite', hostAddedSprite);
         socket.on('moveCat', hostMovedCat);
 
+        socket.on('setupScreen', setupScreen);
         socket.on('moveScreen', moveScreen);
+
 
         console.log(colors.cyan("no roomID found, creating one", _roomID));
         console.log(colors.cyan("there are now", Object.keys(rooms).length, "rooms"));
@@ -161,16 +163,21 @@ io.on('connection', function (socket) {
     hosts[data.room].emit('screenMoved', data);
 }*/
 
+function setupScreen(data) {
+
+    io.to(data.screenID).emit('setYourself', data);
+}
+
 function moveScreen(data) {
 
     // tell this screen to adjust it's container
     io.to(data.screenID).emit('adjustContainer', data);
 }
 
-function hostAddedCat(data) {
+function hostAddedSprite(data) {
 
-    console.log(colors.cyan("cat added in room", data.roomID));
-    io.to([data.roomID]).emit('addCatToScreens');
+    console.log(colors.cyan("sprite added in room", data.roomID));
+    io.to([data.roomID]).emit('addSpriteToScreens');
 }
 
 function hostMovedCat(data) {

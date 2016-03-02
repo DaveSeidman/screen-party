@@ -26,7 +26,11 @@ var Host = function(party) {
         roomText = new PIXI.Text(party.ipAddress + '/#' + host.roomID, { font : '12px Arial' });
         stage.addChild(roomText);
 
-        document.onkeypress = function(e) { if(e.keyCode == 99) addCat(); };
+        document.onkeypress = function(e) {
+            if(e.keyCode == 99) addSprite('../img/catPhoto.jpg');
+            if(e.keyCode == 100) addSprite('../img/dogPhoto.jpg');
+            if(e.keyCode == 115) addSprite('../img/slothPhoto.jpg');
+        };
     }
 
 
@@ -66,12 +70,25 @@ var Host = function(party) {
         //console.log(screen);
         host.screens.push(screen);
 
-        party.socket.emit('moveScreen', {
+
+        var spriteArray = [];
+
+        for(var i = 0; i < container.children.length; i++) {
+
+            var sprite = container.children[i];
+            var spriteData = {};
+            spriteData.texture = sprite.texture.baseTexture.imageUrl;
+            spriteData.position = sprite.position;
+            spriteArray.push(spriteData);
+        }
+
+        party.socket.emit('setupScreen', {
             screenID : data.id,
             offset : {
                 x : randX,
                 y : randY
-            }
+            },
+            graphics : spriteArray
         });
     }
 
@@ -139,11 +156,11 @@ var Host = function(party) {
         render();
     }
 
-    addCat = function() {
+    addSprite = function(image) {
 
-        party.socket.emit('addCat', { roomID: host.roomID });
+        party.socket.emit('addSprite', { roomID: host.roomID });
 
-        var texture = PIXI.Texture.fromImage('../img/catPhoto.jpg');
+        var texture = PIXI.Texture.fromImage(image);
         var sprite = new PIXI.Sprite(texture);
         sprite.interactive = true;
         sprite.buttonMode = true;
@@ -157,7 +174,7 @@ var Host = function(party) {
         .on('mouseupoutside', dragCatEnd)
         .on('mousemove', dragCat);
         host.container.addChild(sprite);
-        console.log(container.children.length)
+        //stageElements.push(sprite);
     }
 
     render = function() {
