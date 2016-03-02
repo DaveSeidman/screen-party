@@ -4,6 +4,8 @@
 // to store arrays of screens inside of rooms array
 
 
+// ssh -i freelunchkey.pem ec2-user@54.191.185.110
+
 // color scheme:
 //   gray = server only
 //   cyan = host
