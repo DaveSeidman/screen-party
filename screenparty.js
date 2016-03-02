@@ -1,3 +1,6 @@
+// to do
+// this file not being used, i suppose the idea would be to offload some of the server code to here or another .js file
+
 var ScreenParty = function () {
 
   var _this = this;

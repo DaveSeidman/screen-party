@@ -22,13 +22,11 @@ var Host = function(party) {
     host.roomCreated = function(data) {
 
         host.roomID = data.id;
-        //clearStage();
         stage.removeChild(roomText);
         roomText = new PIXI.Text(party.ipAddress + '/#' + host.roomID, { font : '12px Arial' });
         stage.addChild(roomText);
 
-        $(document).on('keypress', function() { if(event.code == "KeyC") addCat(); });
-
+        document.onkeypress = function(e) { if(e.keyCode == 99) addCat(); };
     }
 
 
@@ -75,7 +73,6 @@ var Host = function(party) {
                 y : randY
             }
         });
-
     }
 
     host.removeScreen = function(data) {
@@ -137,7 +134,7 @@ var Host = function(party) {
         host.stage = stage = new PIXI.Container();
         host.container = container = new PIXI.Container();
         stage.addChild(container);
-        $("body").prepend(renderer.view);
+        document.body.appendChild(renderer.view);
 
         render();
     }
@@ -161,7 +158,6 @@ var Host = function(party) {
         .on('mousemove', dragCat);
         host.container.addChild(sprite);
         console.log(container.children.length)
-        //console.log(host.roomID);
     }
 
     render = function() {

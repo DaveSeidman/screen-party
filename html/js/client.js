@@ -86,7 +86,7 @@ var Client = function(party) {
         client.stage = stage = new PIXI.Container();
         client.container = container = new PIXI.Container();
         stage.addChild(container);
-        $("body").prepend(renderer.view);
+        document.body.appendChild(renderer.view);
 
         render();
     }
