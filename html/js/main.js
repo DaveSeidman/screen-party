@@ -56,12 +56,6 @@ var Party = function() {
 
             var host = new Host(party);
             party.host = host;
-            host.createRoom();
-            party.socket = io.connect(party.ipAddress + ':80', { transports: ['websocket'] });
-            party.socket.on('roomCreated', host.roomCreated);
-            party.socket.on('clientLeft', host.removeScreen);
-            party.socket.on('clientAdded', host.addScreen);
-            party.socket.on('screenMoved', host.moveScreen);
         }
     }
 

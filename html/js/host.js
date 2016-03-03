@@ -13,13 +13,15 @@ var Host = function(party) {
     var container;
     var roomText;
 
-    host.createRoom = function() {
+    party.socket = io.connect(party.ipAddress + ':80', { transports: ['websocket'] });
+    party.socket.on('roomCreated', roomCreated);
+    party.socket.on('clientLeft', removeScreen);
+    party.socket.on('clientAdded', addScreen);
+    party.socket.on('screenMoved', moveScreen);
+    createCanvas();
 
-        createCanvas();
-    }
 
-
-    host.roomCreated = function(data) {
+    function roomCreated(data) {
 
         host.roomID = data.id;
         stage.removeChild(roomText);
@@ -34,7 +36,7 @@ var Host = function(party) {
     }
 
 
-    host.addScreen = function(data) {
+    function addScreen(data) {
 
         console.log("HOST - addScreen");
 
@@ -92,7 +94,7 @@ var Host = function(party) {
         });
     }
 
-    host.removeScreen = function(data) {
+    function removeScreen(data) {
 
         console.log("remove screen", data);
         for(var i = 0; i < host.screens.length; i++) {   // these loops should be replaced with associative arrays, the key being the socket id
@@ -114,7 +116,7 @@ var Host = function(party) {
     }
 
 
-    host.moveScreen = function(data) {
+    function moveScreen(data) {
 
         //console.log(data);
         //console.log(data.movement.x);
@@ -143,10 +145,9 @@ var Host = function(party) {
 
     // private methods
 
-    createCanvas = function() {
+    function createCanvas() {
 
         renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
-        console.clear();
         renderer.backgroundColor = 0xCCCCCC;
         host.stage = stage = new PIXI.Container();
         host.container = container = new PIXI.Container();
@@ -156,7 +157,7 @@ var Host = function(party) {
         render();
     }
 
-    addSprite = function(image) {
+    function addSprite(image) {
 
         party.socket.emit('addSprite', { roomID: host.roomID });
 
@@ -177,7 +178,7 @@ var Host = function(party) {
         //stageElements.push(sprite);
     }
 
-    render = function() {
+    function render() {
 
         renderer.render(stage);
         requestAnimationFrame(render);

@@ -204,7 +204,7 @@ Object.keys(ifaces).forEach(function (ifname) {
             ipAddr = iface.address;
             config.network.ip = ipAddr;
             fs.writeFile(configFile, JSON.stringify(config, null, 2), function() { // can probably delete 'e'
-                console.log(colors.gray("updated config file with IP address"));
+                console.log(colors.gray("updated config file with IP address", ipAddr));
             });
         }
         ++alias;
