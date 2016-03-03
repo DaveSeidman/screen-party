@@ -28,6 +28,7 @@ var Client = function(party) {
     party.socket.on('moveCat', moveCatScreen);
     party.socket.on('setYourself', setupScreen);
     party.socket.on('adjustContainer', adjustContainer);
+    party.socket.on('clearCanvas', clearCanvas);
     createCanvas();
 
     function roomFound(data) {
@@ -35,6 +36,8 @@ var Client = function(party) {
         console.log("roomfound");
         stage.removeChild(roomText);
         roomText = new PIXI.Text(party.socket.id, { font : '12px Arial' });
+        roomText.x = window.innerWidth/2 - 50;
+        roomText.y = window.innerHeight/2;
         stage.addChild(roomText);
         // window.addEventListener('devicemotion', screenMovement);
     }
@@ -42,6 +45,8 @@ var Client = function(party) {
 
         stage.removeChild(roomText);
         roomText = new PIXI.Text('Room Not Found', { font : '12px Arial' });
+        roomText.x = window.innerWidth/2 - 50;
+        roomText.y = window.innerHeight/2;
         stage.addChild(roomText);
     }
 
@@ -50,6 +55,8 @@ var Client = function(party) {
         stage.removeChild(roomText);
         empty(container);
         roomText = new PIXI.Text('Host Has Left', { font : '12px Arial' });
+        roomText.x = window.innerWidth/2 - 50;
+        roomText.y = window.innerHeight/2;
         stage.addChild(roomText);
     }
 
@@ -100,7 +107,6 @@ var Client = function(party) {
 
 
 
-    // private methods
 
     function createCanvas() {
         renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
@@ -112,6 +118,10 @@ var Client = function(party) {
         document.body.appendChild(renderer.view);
 
         render();
+    }
+
+    function clearCanvas() {
+        empty(container);
     }
 
     function render() {
@@ -126,7 +136,6 @@ var Client = function(party) {
             party.socket.emit('motion',
             {
                 room:client.roomID,
-                //id:
                 socket:party.socket.id,
                 movement: {
                     x: event.acceleration.x,
@@ -135,6 +144,7 @@ var Client = function(party) {
             });
         }
     }
+
 
 
     function empty(container) {
@@ -146,4 +156,13 @@ var Client = function(party) {
 
     return client;
 
+    function getAgent() {
+        var agent = "default";
+        if(navigator.userAgent.match(/Android/i)) agent = "android";
+        if(navigator.userAgent.match(/BlackBerry/i)) agent = "blackberry";
+        if(navigator.userAgent.match(/iPhone|iPad|iPod/i)) agent = "ios";
+        if(navigator.userAgent.match(/Opera Mini/i)) agent = "opera";
+        if(navigator.userAgent.match(/IEMobile/i)) agent = "ie";
+        return agent;
+    }
 }

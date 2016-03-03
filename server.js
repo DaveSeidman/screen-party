@@ -18,13 +18,8 @@ var app = require('express')();
 var express = require('express');
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
-var os = require('os');
-var fs = require('fs');
 var colors = require('colors');
-var ifaces = os.networkInterfaces();
-var ipAddr;
-var configFile = './html/config.json';
-var config = require(configFile);
+var updateConfig = require('updateConfig');
 
 var rooms = []; // maintain a list of rooms
 var hosts = []; // maintain a list of hosts for each room
@@ -88,13 +83,18 @@ io.on('connection', function (socket) {
         rooms[_roomID] = _roomID;
         hosts[_roomID] = socket;
         socket.join(_roomID);
-        socket.emit('roomCreated', { id: _roomID, ip:ipAddr });
+        socket.emit('roomCreated', { id: _roomID });
         socket.on('addSprite', hostAddedSprite);
         socket.on('moveCat', hostMovedCat);
 
         socket.on('setupScreen', setupScreen);
         socket.on('moveScreen', moveScreen);
 
+        socket.on('clearStage', function(data) {
+
+            console.log(colors.cyan("clearing stage for room", data.roomID));
+            io.to(data.roomID).emit('clearCanvas');
+        });
 
         console.log(colors.cyan("no roomID found, creating one", _roomID));
         console.log(colors.cyan("there are now", Object.keys(rooms).length, "rooms"));
@@ -187,26 +187,3 @@ function hostMovedCat(data) {
     //console.log("hose moved a cat", data.room, data.position.x, data.position.y);
     io.to([data.room]).emit('moveCat', data);
 }
-
-
-// get local IP address
-
-Object.keys(ifaces).forEach(function (ifname) {
-    var alias = 0;
-    ifaces[ifname].forEach(function (iface) {
-        if ('IPv4' !== iface.family || iface.internal !== false) {
-            return;
-        }
-        if (alias >= 1) {
-
-        }
-        else {
-            ipAddr = iface.address;
-            config.network.ip = ipAddr;
-            fs.writeFile(configFile, JSON.stringify(config, null, 2), function() { // can probably delete 'e'
-                console.log(colors.gray("updated config file with IP address", ipAddr));
-            });
-        }
-        ++alias;
-    });
-});

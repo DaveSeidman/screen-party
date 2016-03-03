@@ -1,15 +1,11 @@
 'use strict';
 
-// to do
-// remove jquery, it's mostly unused
-
 // Program flow:
 // go to index.html/[no hash]
-// -- You become a host, a has is assigned
+// -- You become a host, a hash is assigned
 
 // go to index.html/[hash]
-// -- Lookup this hash, if found, you are a client
-
+// -- Lookup this hash, if found, you join room.
 
 
 var Party = function() {
@@ -20,10 +16,7 @@ var Party = function() {
 
         party.isLocal = (window.location.host.indexOf('localhost') > -1 || window.location.host.indexOf('192') > -1);
         if(party.isLocal) {
-            /*$.getJSON("config.json", function(data) {
-                party.ipAddress = data.network.ip;
-                setupSocket();
-            });*/
+
             var httpRequest = new XMLHttpRequest();
             httpRequest.onreadystatechange = function() {
                if (httpRequest.readyState === 4) {
@@ -62,14 +55,3 @@ var Party = function() {
     return party;
 
 } ();
-
-
-function getAgent() {
-    var agent = "default";
-    if(navigator.userAgent.match(/Android/i)) agent = "android";
-    if(navigator.userAgent.match(/BlackBerry/i)) agent = "blackberry";
-    if(navigator.userAgent.match(/iPhone|iPad|iPod/i)) agent = "ios";
-    if(navigator.userAgent.match(/Opera Mini/i)) agent = "opera";
-    if(navigator.userAgent.match(/IEMobile/i)) agent = "ie";
-    return agent;
-}
