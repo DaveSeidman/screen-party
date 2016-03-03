@@ -6,36 +6,44 @@ var Client = function(party) {
     var stage;
     var container;
     var roomText;
-    var cat;
-
+    //var cat;
 
     var agent = getAgent();
-    party.socket = io.connect(party.ipAddress + ':80', {
-        transports: ['websocket'],
-        query:
-        "roomID=" + window.location.hash.substring(1) + "&" +
-        "agent=" + agent + "&" +
-        "width=" + window.innerWidth + "&" +
-        "height=" + window.innerHeight + "&" +
-        "orientation=" + window.orientation
-    });
 
-    client.roomID = window.location.hash.substring(1);
-    party.socket.on('roomFound', roomFound);
-    party.socket.on('roomNotFound', roomNotFound);
-    party.socket.on('hostLeft', hostLeft);
-    party.socket.on('addSpriteToScreens', addSprite);
-    party.socket.on('moveCat', moveCatScreen);
-    party.socket.on('setYourself', setupScreen);
-    party.socket.on('adjustContainer', adjustContainer);
-    party.socket.on('clearCanvas', clearCanvas);
+
+    connect();
+    listen();
     createCanvas();
+
+    function connect() {
+        party.socket = io.connect(party.ipAddress + ':80', {
+            transports: ['websocket'],
+            query:
+            "roomID=" + window.location.hash.substring(1) + "&" +
+            "agent=" + agent + "&" +
+            "width=" + window.innerWidth + "&" +
+            "height=" + window.innerHeight + "&" +
+            "orientation=" + window.orientation
+        });
+        client.roomID = window.location.hash.substring(1);
+    }
+
+    function listen() {
+
+        party.socket.on('roomFound', roomFound);
+        party.socket.on('roomNotFound', roomNotFound);
+        party.socket.on('hostLeft', hostLeft);
+        party.socket.on('addSprite', addSprite);
+        party.socket.on('moveSprite', moveSprite);
+        party.socket.on('setYourself', setupScreen);
+        party.socket.on('adjustContainer', adjustContainer);
+        party.socket.on('clearCanvas', clearCanvas);
+    }
 
     function roomFound(data) {
 
-        console.log("roomfound");
         stage.removeChild(roomText);
-        roomText = new PIXI.Text(party.socket.id, { font : '12px Arial' });
+        roomText = new PIXI.Text(party.socket.id, { font : '12px courier' });
         roomText.x = window.innerWidth/2 - 50;
         roomText.y = window.innerHeight/2;
         stage.addChild(roomText);
@@ -44,7 +52,7 @@ var Client = function(party) {
     function roomNotFound() {
 
         stage.removeChild(roomText);
-        roomText = new PIXI.Text('Room Not Found', { font : '12px Arial' });
+        roomText = new PIXI.Text('Room Not Found', { font : '12px courier' });
         roomText.x = window.innerWidth/2 - 50;
         roomText.y = window.innerHeight/2;
         stage.addChild(roomText);
@@ -54,30 +62,27 @@ var Client = function(party) {
 
         stage.removeChild(roomText);
         empty(container);
-        roomText = new PIXI.Text('Host Has Left', { font : '12px Arial' });
+        roomText = new PIXI.Text('Host Has Left', { font : '12px courier' });
         roomText.x = window.innerWidth/2 - 50;
         roomText.y = window.innerHeight/2;
         stage.addChild(roomText);
     }
 
 
-    function addSprite() {
+    function addSprite(data) {
 
-        var texture = PIXI.Texture.fromImage('../img/catPhoto.jpg');
-        //var sprite = new PIXI.Sprite(texture);
-        cat = new PIXI.Sprite(texture);
-        cat.anchor.set(0.5);
-        cat.alpha = .8;
-        cat.x = 0;
-        cat.y = 0;
-        container.addChild(cat);
+        var texture = PIXI.Texture.fromImage(data.texture);
+        sprite = new PIXI.Sprite(texture);
+        sprite.alpha = .8;
+        sprite.x = data.position.x;
+        sprite.y = data.position.y;
+        container.addChild(sprite);
     }
 
-    function moveCatScreen(data) {
+    function moveSprite(data) {
 
-        //console.log("move the cat", data);
-        cat.position.x = data.position.x;
-        cat.position.y = data.position.y;
+        container.getChildAt(data.spriteID).x = data.position.x;
+        container.getChildAt(data.spriteID).y = data.position.y;
     }
 
     function setupScreen(data) {
@@ -85,7 +90,10 @@ var Client = function(party) {
         container.position.x = -data.offset.x;
         container.position.y = -data.offset.y;
 
-        console.log(data.graphics);
+        for(var i = 0; i < data.graphics.length; i++) {
+
+            addSprite(data.graphics[i]);
+        }
     }
 
     function adjustContainer(data) {
@@ -104,9 +112,6 @@ var Client = function(party) {
 
         for (var i = stage.children.length - 1; i >= 0; i--) {	stage.removeChild(stage.children[i]);};
     }
-
-
-
 
     function createCanvas() {
         renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);

@@ -34,11 +34,7 @@ io.on('connection', function (socket) {
 
     console.log(colors.gray("incoming connection", socket.id));
 
-    if(socket.request._query.roomID) { // there was a hash, meaning a client is trying to enter a room
-
-        // ------------------------
-        //   client code
-        // ----------------------
+    if(socket.request._query.roomID) { // --- CLIENT --- there was a hash, meaning a client is trying to enter a room
 
         var _roomID = socket.request._query.roomID;
         var _agent = socket.request._query.agent; // get the client's browser type (or device type hopefully);
@@ -73,28 +69,22 @@ io.on('connection', function (socket) {
             socket.emit('roomNotFound');
         }
     }
-    else {  // create a room with a random ID
-
-        // ------------------------
-        //   host code
-        // ----------------------
+    else {  // --- HOST -- create a room with a random ID
 
         _roomID = Math.floor(Math.random()*900) + 100; // add check to make sure this isn't already in rooms array
         rooms[_roomID] = _roomID;
         hosts[_roomID] = socket;
-        socket.join(_roomID);
-        socket.emit('roomCreated', { id: _roomID });
-        socket.on('addSprite', hostAddedSprite);
-        socket.on('moveCat', hostMovedCat);
+        //socket.join(_roomID);
+        //socket.emit('roomCreated', { id: _roomID });
 
-        socket.on('setupScreen', setupScreen);
-        socket.on('moveScreen', moveScreen);
-
-        socket.on('clearStage', function(data) {
-
-            console.log(colors.cyan("clearing stage for room", data.roomID));
-            io.to(data.roomID).emit('clearCanvas');
-        });
+        socket
+            .join(_roomID)
+            .emit('roomCreated', { id: _roomID })
+            .on('addSprite', function(data) { io.to([data.roomID]).emit('addSprite', data.image); })
+            .on('moveSprite', function(data) { io.to([data.room]).emit('moveSprite', data); })
+            .on('setupScreen', function(data) { io.to(data.screenID).emit('setYourself', data); })
+            .on('moveScreen', function(data) { io.to(data.screenID).emit('adjustContainer', data); })
+            .on('clearStage', function(data) { io.to(data.roomID).emit('clearCanvas'); });
 
         console.log(colors.cyan("no roomID found, creating one", _roomID));
         console.log(colors.cyan("there are now", Object.keys(rooms).length, "rooms"));
@@ -178,12 +168,12 @@ function moveScreen(data) {
 
 function hostAddedSprite(data) {
 
-    console.log(colors.cyan("sprite added in room", data.roomID));
-    io.to([data.roomID]).emit('addSpriteToScreens');
+    console.log(colors.cyan("host in room", data.roomID, "added", data.image.texture));
+    io.to([data.roomID]).emit('addSprite', data.image);
 }
 
-function hostMovedCat(data) {
+function hostMovedSprite(data) {
 
     //console.log("hose moved a cat", data.room, data.position.x, data.position.y);
-    io.to([data.room]).emit('moveCat', data);
+    io.to([data.room]).emit('moveSprite', data);
 }

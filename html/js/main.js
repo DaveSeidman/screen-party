@@ -7,7 +7,6 @@
 // go to index.html/[hash]
 // -- Lookup this hash, if found, you join room.
 
-
 var Party = function() {
 
     var party = {};
@@ -22,7 +21,6 @@ var Party = function() {
                if (httpRequest.readyState === 4) {
                    if (httpRequest.status === 200) {
                        var data = JSON.parse(httpRequest.responseText);
-                       //if (callback) callback(data);
                        party.ipAddress = data.network.ip;
                        setupSocket();
                    }
@@ -39,14 +37,13 @@ var Party = function() {
 
     function setupSocket() {
 
-        if(window.location.hash) { // client trying to join a room
-
+        // client trying to join a room
+        if(window.location.hash) {
             var client = new Client(party);
             party.client = client;
-
         }
-        else { // create a new room
-
+        // host creating a new room
+        else {
             var host = new Host(party);
             party.host = host;
         }

@@ -13,19 +13,27 @@ var Host = function(party) {
     var container;
     var roomText;
 
-    party.socket = io.connect(party.ipAddress + ':80', { transports: ['websocket'] });
-    party.socket.on('roomCreated', roomCreated);
-    party.socket.on('clientLeft', removeScreen);
-    party.socket.on('clientAdded', addScreen);
-    party.socket.on('screenMoved', moveScreen);
+    connect();
+    listen();
     createCanvas();
 
+
+    function connect() {
+        party.socket = io.connect(party.ipAddress + ':80', { transports: ['websocket'] });
+    }
+
+    function listen() {
+        party.socket.on('roomCreated', roomCreated);
+        party.socket.on('clientLeft', removeScreen);
+        party.socket.on('clientAdded', addScreen);
+        party.socket.on('screenMoved', moveScreen);
+    }
 
     function roomCreated(data) {
 
         host.roomID = data.id;
         stage.removeChild(roomText);
-        roomText = new PIXI.Text(party.ipAddress + '/#' + host.roomID, { font : '12px Arial' });
+        roomText = new PIXI.Text(party.ipAddress + '/#' + host.roomID, { font : '12px Courier' });
         roomText.x = window.innerWidth/2 - 50;
         roomText.y = window.innerHeight/2;
         stage.addChild(roomText);
@@ -68,7 +76,7 @@ var Host = function(party) {
         stage.addChild(sprite);
 
         var myID = data.id2;
-        var socketText = new PIXI.Text(data.id.substring(2), { font : '12px Arial' });
+        var socketText = new PIXI.Text(data.id.substring(2), { font : '12px Courier' });
         socketText.x = data.width/2 - 50;
         socketText.y = data.height/2;
         sprite.addChild(socketText);
@@ -168,8 +176,6 @@ var Host = function(party) {
     }
     function addSprite(image) {
 
-        party.socket.emit('addSprite', { roomID: host.roomID });
-
         var texture = PIXI.Texture.fromImage(image);
         var sprite = new PIXI.Sprite(texture);
         sprite.interactive = true;
@@ -179,11 +185,22 @@ var Host = function(party) {
         sprite.x = 0;
         sprite.y = 0;
         sprite
-        .on('mousedown', dragSpriteStart)
-        .on('mouseup', dragSpriteEnd)
-        .on('mouseupoutside', dragSpriteEnd)
-        .on('mousemove', dragSprite);
+            .on('mousedown', dragSpriteStart)
+            .on('mouseup', dragSpriteEnd)
+            .on('mouseupoutside', dragSpriteEnd)
+            .on('mousemove', dragSprite);
+
         host.container.addChild(sprite);
+        sprite.index = host.container.children.length-1;
+
+        var imgData = {
+            texture: image,
+            position: {
+                x: sprite.x,
+                y: sprite.y
+            }
+        }
+        party.socket.emit('addSprite', { roomID: host.roomID, image:imgData });
     }
 
     function render() {
@@ -235,10 +252,10 @@ var Host = function(party) {
             this.position.x = newPosition.x + offset.x;
             this.position.y = newPosition.y + offset.y;
 
-            party.socket.emit('moveCat',
+            party.socket.emit('moveSprite',
             {
                 room:host.roomID,
-                socket:party.socket.id,
+                spriteID:this.index,
                 position: {
                     x: this.position.x,
                     y: this.position.y
