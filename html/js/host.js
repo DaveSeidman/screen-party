@@ -109,7 +109,6 @@ var Host = function(party) {
 
     function removeScreen(data) {
 
-        console.log("remove screen", data);
         for(var i = 0; i < host.screens.length; i++) {   // these loops should be replaced with associative arrays, the key being the socket id
 
             var screen = host.screens[i];
@@ -174,13 +173,14 @@ var Host = function(party) {
         empty(container);
         party.socket.emit('clearStage', { roomID:host.roomID } );
     }
+
     function addSprite(image) {
 
         var texture = PIXI.Texture.fromImage(image);
         var sprite = new PIXI.Sprite(texture);
         sprite.interactive = true;
         sprite.buttonMode = true;
-        sprite.anchor.set(0.5);
+        //sprite.anchor.set(0.5);
         sprite.alpha = .5;
         sprite.x = 0;
         sprite.y = 0;

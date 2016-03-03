@@ -61,8 +61,6 @@ io.on('connection', function (socket) {
             });
             console.log(colors.gray("there are now", clientAmount, "sockets in room", _roomID, "including the host"));
             socket.emit('roomFound');
-            //socket.on('motion', screenMoved);
-            //socket.on('buttonPressed', screenButtonPressed);
         }
         else {  // room doesn't exist
             console.log(colors.red("room not found"));
@@ -74,8 +72,6 @@ io.on('connection', function (socket) {
         _roomID = Math.floor(Math.random()*900) + 100; // add check to make sure this isn't already in rooms array
         rooms[_roomID] = _roomID;
         hosts[_roomID] = socket;
-        //socket.join(_roomID);
-        //socket.emit('roomCreated', { id: _roomID });
 
         socket
             .join(_roomID)
@@ -94,55 +90,24 @@ io.on('connection', function (socket) {
     socket.on('disconnect', function() {
 
         console.log(colors.gray("disconnecting"));
-    /*    var rooms = this.adapter.rooms;
-        var roomID = Object.keys(rooms)[0];
-        var socketsInRoom = io.sockets.adapter.rooms[roomID].sockets;
 
-        var i = 0;
-        for(var socket in socketsInRoom) {
-            console.log(socket, this.id);
-            if(socket == this.id) {
-                if(i == 0) {
-                    console.log(colors.cyan("host is disconnecting"));
-                    socket.to(roomID).emit('hostLeft');
-                    delete rooms[roomID];
-                }
-                else {
-                    console.log(colors.green("client is disconnecting"));
-                    hosts[roomID].emit('clientLeft', { id: client });
-                }
-                break;
-            }
-            i++;
-        }*/
-
-
-    //    console.log(socketsInRoom, this.id);
-
-        /*if(socketsInRoom[0] == this.id) {
-            console.log(colors.cyan("host is disconnecting"));
-            socket.to(roomID).emit('hostLeft');
-            delete rooms[roomID];
-        }
-        else {
-            console.log(colors.green("client is disconnecting"));
-            //console.log(hosts[roomID]);
-            //hosts[roomID].emit('clientLeft', { id: client });
-        }*/
-
+        // loop through array of hosts
         for(var id in hosts) {
+            var wasHost = false;
             if(hosts[id].id == socket.id) {
                 console.log("the host is disconnecting");
+                wasHost = true;
                 socket.to(rooms[id]).emit('hostLeft');
                 delete rooms[id];
                 delete hosts[id];
                 break;
             }
-            else {
-                for (_roomID in socket.adapter.rooms) break;
-                console.log("a client is leaving room", _roomID);
-                if(hosts[_roomID]) hosts[_roomID].emit('clientLeft', { id: socket.id });
-            }
+        }
+        if(!wasHost) {
+            for (_roomID in socket.adapter.rooms) break;
+            console.log("a client is leaving room", _roomID);
+            // make sure host is still around
+            if(hosts[_roomID]) hosts[_roomID].emit('clientLeft', { id: socket.id });
         }
         console.log("there are " + Object.keys(rooms).length + " rooms remaining");
     });
