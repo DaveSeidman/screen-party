@@ -5,10 +5,9 @@ var Host = function(party) {
 
     var host = this;
 
-
     host.screens = [];
 
-    var offset = { x:0, y:0 }; // this should not be global, re-scope
+    //var offset = { x:0, y:0 }; // this should not be global, re-scope
     var stage;
     var container;
     var roomText;
@@ -16,7 +15,6 @@ var Host = function(party) {
     connect();
     listen();
     createCanvas();
-
 
     function connect() {
         party.socket = io.connect(party.ipAddress + ':80', { transports: ['websocket'] });
@@ -59,21 +57,21 @@ var Host = function(party) {
         graphics.beginFill(0xFFFFFF, .75);
         graphics.drawRect( 0 , 0 , data.width , data.height );
 
-        var sprite = new PIXI.Sprite();
-        sprite.interactive = true;
-        sprite.buttonMode = true;
-        sprite.anchor.set(0.5);
-        sprite
-        .on('mousedown', dragScreenStart)
-        .on('mouseup', dragScreenEnd)
-        .on('mouseupoutside', dragScreenEnd)
-        .on('mousemove', dragScreen); // To Do: this will result in too many listeners, add and remove as necessary
-        sprite.position.x = randX;
-        sprite.position.y = randY;
+        var device = new PIXI.Sprite();
+        device.interactive = true;
+        device.buttonMode = true;
+        device.anchor.set(0.5);
+        device
+            .on('mousedown', dragScreenStart)
+            .on('mouseup', dragScreenEnd)
+            .on('mouseupoutside', dragScreenEnd);
+            //.on('mousemove', dragScreen); // To Do: this will result in too many listeners, add and remove as necessary
+        device.position.x = randX;
+        device.position.y = randY;
 
-        sprite.addChild(graphics);
-        sprite.screenID = data.id;
-        stage.addChild(sprite);
+        device.addChild(graphics);
+        device.screenID = data.id;
+        stage.addChild(device);
 
         var myID = data.id2;
         var socketText = new PIXI.Text(data.id.substring(2), { font : '12px Courier' });
@@ -163,7 +161,26 @@ var Host = function(party) {
         renderer.backgroundColor = 0xCCCCCC;
         host.stage = stage = new PIXI.Container();
         host.container = container = new PIXI.Container();
+        container.scale.set(.5);
+
         stage.addChild(container);
+
+        var gridTexture = PIXI.Texture.fromImage('img/grid.jpg');
+        var grid = new PIXI.Sprite(gridTexture);
+        grid.interactive = true;
+        grid.buttonMode = true;
+        grid.anchor.set(0.5);
+        grid.alpha = .5;
+        grid.x = window.innerWidth/2;
+        grid.y = window.innerHeight/2;
+        grid
+            .on('mousedown', dragGridStart)
+            .on('mouseup', dragGridEnd)
+            .on('mouseupoutside', dragGridEnd);
+            //.on('mousemove', dragGrid);
+
+        host.container.addChild(grid);
+
         document.body.appendChild(renderer.view);
 
         render();
@@ -187,8 +204,8 @@ var Host = function(party) {
         sprite
             .on('mousedown', dragSpriteStart)
             .on('mouseup', dragSpriteEnd)
-            .on('mouseupoutside', dragSpriteEnd)
-            .on('mousemove', dragSprite);
+            .on('mouseupoutside', dragSpriteEnd);
+            //.on('mousemove', dragSprite);
 
         host.container.addChild(sprite);
         sprite.index = host.container.children.length-1;
@@ -212,19 +229,22 @@ var Host = function(party) {
 
     function dragScreenStart(event)  {
         this.data = event.data;
-        this.dragging = true;
-        offset.x = this.x - this.data.originalEvent.x;
-        offset.y = this.y - this.data.originalEvent.y;
+        //this.dragging = true;
+        this.offset = { x: this.x - event.data.originalEvent.x,
+                        y: this.y - event.data.originalEvent.y };
+
+        this.on('mousemove', dragScreen);
     }
     function dragScreenEnd()  {
-        this.dragging = false;
-        this.data = null;
+        //this.dragging = false;
+        //this.data = null;
+        this.off('mousemove', dragScreen);
     }
     function dragScreen() {
-        if (this.dragging)  {
+        //if (this.dragging)  {
             var newPosition = this.data.getLocalPosition(this.parent);
-            this.position.x = newPosition.x + offset.x;
-            this.position.y = newPosition.y + offset.y;
+            this.position.x = newPosition.x + this.offset.x;
+            this.position.y = newPosition.y + this.offset.y;
 
             party.socket.emit('moveScreen', {
                 screenID : this.screenID,
@@ -233,24 +253,30 @@ var Host = function(party) {
                     y : this.position.y
                 }
             });
-        }
+    //    }
     }
 
     function dragSpriteStart(event)  {
-        this.data = event.data;
-        this.dragging = true;
-        offset.x = this.x - this.data.originalEvent.x;
-        offset.y = this.y - this.data.originalEvent.y;
+        //this.data = event.data;
+        //this.dragging = true;
+        //offset.x = this.x - event.data.originalEvent.x;
+        //offset.y = this.y - event.data.originalEvent.y;
+        this.offset = { x: this.x - event.data.originalEvent.x,
+                        y: this.y - event.data.originalEvent.y };
+
+        this.on('mousemove', dragSprite);
     }
     function dragSpriteEnd()  {
-        this.dragging = false;
-        this.data = null;
+        //this.dragging = false;
+        //this.data = null;
+        this.off('mousemove', dragSprite);
     }
     function dragSprite() {
-        if (this.dragging)  {
-            var newPosition = this.data.getLocalPosition(this.parent);
-            this.position.x = newPosition.x + offset.x;
-            this.position.y = newPosition.y + offset.y;
+        console.log("dragging", event);
+        //if (this.dragging)  {
+            /*var newPosition = this.data.getLocalPosition(this.parent);
+            this.position.x = newPosition.x + this.offset.x;
+            this.position.y = newPosition.y + this.offset.y;
 
             party.socket.emit('moveSprite',
             {
@@ -260,8 +286,21 @@ var Host = function(party) {
                     x: this.position.x,
                     y: this.position.y
                 }
-            });
-        }
+            });*/
+    //    }
+    }
+
+    function dragGridStart() {
+        this.on('mousemove', dragGrid);
+        this.offset = { x:event.clientX, y:event.clientY };
+    }
+    function dragGridEnd() {
+        this.off('mousemouse', dragGrid);
+    }
+    function dragGrid() {
+        console.log(this);
+        this.position.x = event.clientX + this.offset.x;
+        this.position.y = event.clientY + this.offset.y;
     }
 
 
@@ -271,8 +310,6 @@ var Host = function(party) {
             container.removeChild(container.children[i]);
         };
     }
-
-
 
     var Screen = function(id, socket, sprite, position, velocity, prevVelocity, width, height, orientation) {
         this.socket = socket;

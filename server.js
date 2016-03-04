@@ -5,6 +5,7 @@
 
 
 // ssh -i freelunchkey.pem ec2-user@54.191.185.110
+//https://marvelapp.github.io/devices.css/
 
 // color scheme:
 //   gray = server only
@@ -18,8 +19,11 @@ var app = require('express')();
 var express = require('express');
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
+var fs = require('fs');
 var colors = require('colors');
 var updateConfig = require('updateConfig');
+var multer  = require('multer')
+var upload = multer({ dest: 'html/img/' })
 
 var rooms = []; // maintain a list of rooms
 var hosts = []; // maintain a list of hosts for each room
@@ -27,6 +31,13 @@ var hosts = []; // maintain a list of hosts for each room
 
 server.listen(80);
 app.use('/', express.static('html/'));
+
+
+// Receive uploads and write them to html/img/ folder
+app.post('/upload', upload.single('image'), function (req,res) {
+
+    fs.renameSync(req.file.path, 'html/img/' + req.file.originalname);
+});
 
 console.log(colors.gray("starting server on port 80"));
 
