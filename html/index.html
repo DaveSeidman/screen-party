@@ -12,14 +12,12 @@
 </head>
 <body>
 
-    <form name="image" action="/upload" method="post" enctype="multipart/form-data">
+    <form id="form" name="image" action="/upload" method="post" enctype="multipart/form-data">
         <input type="file" name="image" id="file">
     </form>
 
     <script>
-
         document.getElementById("file").addEventListener('change', function() {
-
             console.log("changed");
             document.forms.image.submit();
         })

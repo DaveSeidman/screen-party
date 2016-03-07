@@ -1,12 +1,9 @@
 var Client = function(party) {
 
     var client = this;
-
-
     var stage;
-    var container;
+    var graphics;
     var roomText;
-    //var cat;
 
     var agent = getAgent();
 
@@ -44,7 +41,7 @@ var Client = function(party) {
 
         stage.removeChild(roomText);
         roomText = new PIXI.Text(party.socket.id, { font : '12px courier' });
-        roomText.x = window.innerWidth/2 - 50;
+        roomText.x = window.innerWidth/2 - 70;
         roomText.y = window.innerHeight/2;
         stage.addChild(roomText);
         // window.addEventListener('devicemotion', screenMovement);
@@ -61,7 +58,7 @@ var Client = function(party) {
     function hostLeft() {
 
         stage.removeChild(roomText);
-        empty(container);
+        empty(graphics);
         roomText = new PIXI.Text('Host Has Left', { font : '12px courier' });
         roomText.x = window.innerWidth/2 - 50;
         roomText.y = window.innerHeight/2;
@@ -73,22 +70,26 @@ var Client = function(party) {
 
         var texture = PIXI.Texture.fromImage(data.texture);
         sprite = new PIXI.Sprite(texture);
-        sprite.alpha = .8;
+        sprite.alpha = 1;
         sprite.x = data.position.x;
         sprite.y = data.position.y;
-        container.addChild(sprite);
+        graphics.addChild(sprite);
     }
 
     function moveSprite(data) {
 
-        container.getChildAt(data.spriteID).x = data.position.x;
-        container.getChildAt(data.spriteID).y = data.position.y;
+        graphics.getChildAt(data.spriteID-1).x = data.position.x;
+        graphics.getChildAt(data.spriteID-1).y = data.position.y;
     }
 
     function setupScreen(data) {
 
-        container.position.x = -data.offset.x;
-        container.position.y = -data.offset.y;
+        var gridTexture = PIXI.Texture.fromImage('img/grid.jpg');
+        var grid = new PIXI.Sprite(gridTexture);
+        graphics.addChild(grid);
+        //grid.anchor.set(0.5);
+        graphics.x = data.offset.x;
+        graphics.y = data.offset.y;
 
         for(var i = 0; i < data.graphics.length; i++) {
 
@@ -99,8 +100,8 @@ var Client = function(party) {
     function adjustContainer(data) {
 
         // combine this and just use a point?
-        container.position.x = -data.offset.x;
-        container.position.y = -data.offset.y;
+        graphics.position.x = data.offset.x;
+        graphics.position.y = data.offset.y;
     }
 
     function assetMovement() {
@@ -108,26 +109,30 @@ var Client = function(party) {
 
     }
 
-    function clearStage() {
-
-        for (var i = stage.children.length - 1; i >= 0; i--) {	stage.removeChild(stage.children[i]);};
-    }
-
     function createCanvas() {
         renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
-        //console.clear();
         renderer.backgroundColor = 0xCCCCCC;
         client.stage = stage = new PIXI.Container();
-        client.container = container = new PIXI.Container();
-        stage.addChild(container);
+        client.graphics = graphics = new PIXI.Container();
+        graphics.x = -3000;
+        graphics.y = -3000;
+        stage.addChild(graphics);
+        document.body.removeChild(document.getElementById('form'));
         document.body.appendChild(renderer.view);
-
         render();
     }
 
     function clearCanvas() {
-        empty(container);
+        empty(graphics);
     }
+
+    function empty(container) { // duplicated, move to main.js or create utils.js
+
+        for (var i = container.children.length - 1; i > 1; i--) {
+            container.removeChild(container.children[i]);
+        };
+    }
+
 
     function render() {
 
@@ -148,15 +153,6 @@ var Client = function(party) {
                 }
             });
         }
-    }
-
-
-
-    function empty(container) {
-
-        for (var i = container.children.length - 1; i >= 0; i--) {
-            container.removeChild(container.children[i]);
-        };
     }
 
     return client;
