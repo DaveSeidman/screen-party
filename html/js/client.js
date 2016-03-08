@@ -4,6 +4,7 @@ var Client = function(party) {
     var stage;
     var graphics;
     var roomText;
+    var screenIndex;
 
     var agent = getAgent();
 
@@ -40,16 +41,16 @@ var Client = function(party) {
     function roomFound(data) {
 
         stage.removeChild(roomText);
-        roomText = new PIXI.Text(party.socket.id, { font : '12px courier' });
+        roomText = new PIXI.Text(party.socket.id, { font : '14px courier' });
         roomText.x = window.innerWidth/2 - 70;
         roomText.y = window.innerHeight/2;
         stage.addChild(roomText);
-        // window.addEventListener('devicemotion', screenMovement);
+
     }
     function roomNotFound() {
 
         stage.removeChild(roomText);
-        roomText = new PIXI.Text('Room Not Found', { font : '12px courier' });
+        roomText = new PIXI.Text('Room Not Found', { font : '14px courier' });
         roomText.x = window.innerWidth/2 - 50;
         roomText.y = window.innerHeight/2;
         stage.addChild(roomText);
@@ -59,7 +60,7 @@ var Client = function(party) {
 
         stage.removeChild(roomText);
         empty(graphics);
-        roomText = new PIXI.Text('Host Has Left', { font : '12px courier' });
+        roomText = new PIXI.Text('Host Has Left', { font : '14px courier' });
         roomText.x = window.innerWidth/2 - 50;
         roomText.y = window.innerHeight/2;
         stage.addChild(roomText);
@@ -71,9 +72,13 @@ var Client = function(party) {
         var texture = PIXI.Texture.fromImage(data.texture);
         sprite = new PIXI.Sprite(texture);
         sprite.alpha = 1;
-        sprite.x = data.position.x;
-        sprite.y = data.position.y;
+
         graphics.addChild(sprite);
+        sprite.texture.baseTexture.on('loaded', function() {
+            sprite.x = data.position.x;
+            sprite.y = data.position.y;
+            sprite.anchor.set(0.5);
+        });
     }
 
     function moveSprite(data) {
@@ -84,24 +89,27 @@ var Client = function(party) {
 
     function setupScreen(data) {
 
+        console.log(data.screenIndex);
+        client.screenIndex = screenIndex = data.screenIndex;
         var gridTexture = PIXI.Texture.fromImage('img/grid.jpg');
         var grid = new PIXI.Sprite(gridTexture);
         graphics.addChild(grid);
-        //grid.anchor.set(0.5);
-        graphics.x = data.offset.x;
-        graphics.y = data.offset.y;
+        grid.texture.baseTexture.on('loaded', function() {
+            graphics.x = -data.offset.x;
+            graphics.y = -data.offset.y;
+        });
 
         for(var i = 0; i < data.graphics.length; i++) {
 
             addSprite(data.graphics[i]);
         }
+        window.addEventListener('devicemotion', screenMovement);
     }
 
     function adjustContainer(data) {
-
         // combine this and just use a point?
-        graphics.position.x = data.offset.x;
-        graphics.position.y = data.offset.y;
+        graphics.x = data.offset.x;
+        graphics.y = data.offset.y;
     }
 
     function assetMovement() {
@@ -145,8 +153,9 @@ var Client = function(party) {
         if(Math.abs(event.acceleration.x) > 0.25 || Math.abs(event.acceleration.y) > 0.25) {
             party.socket.emit('motion',
             {
-                room:client.roomID,
+                roomID:client.roomID,
                 socket:party.socket.id,
+                index:client.screenIndex,
                 movement: {
                     x: event.acceleration.x,
                     y: event.acceleration.y

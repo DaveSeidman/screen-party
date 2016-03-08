@@ -8,8 +8,8 @@ var Host = function(party) {
 
     var host = this;
     var stage;
-    var graphics;
-    var screens;
+    var graphics; // container for images
+    var screens; // container for screen boxed
     var roomText;
     var draggingScreens = false;
     var zoom = 2;
@@ -30,8 +30,25 @@ var Host = function(party) {
         party.socket.on('clientLeft', removeScreen);
         party.socket.on('clientAdded', addScreen);
         party.socket.on('screenMoved', moveScreen);
+        party.socket.on('screenMotion', motionScreen);
     }
 
+
+    function motionScreen(data) {
+
+        for(var i = 0; i < screenArray.length; i++) {
+            if(screenArray[i].id == data.index) {
+
+                var screen = screenArray[i];
+                screen.velocity.x += data.movement.x;
+                screen.velocity.y += data.movement.y;
+
+                console.log(screen.velocity.x, screen.velocity.y);
+                screen.sprite.x += screen.velocity.x;
+                screen.sprite.y += screen.velocity.y;
+            }
+        }
+    }
 
     function createCanvas() {
 
@@ -50,11 +67,7 @@ var Host = function(party) {
 
         grid.interactive = true;
         grid.buttonMode = true;
-        //grid.anchor.set(0.5);
-        //grid.x = window.innerWidth/2;
-        //grid.y = window.innerHeight/2;
-        //grid.x = -3000;
-        //grid.y = -3000;
+
         grid
             .on('mousedown', dragGridStart)
             .on('mouseup', dragGridEnd)
@@ -66,9 +79,7 @@ var Host = function(party) {
         document.body.appendChild(renderer.view);
 
         grid.texture.baseTexture.on('loaded', function() {
-            //stage.anchor.set(0.5);
             stage.scale.set(1/zoom);
-            //graphics.anchor.set(0.5);
             graphics.x = (window.innerWidth * zoom - grid.width)/2;// + window.innerWidth/2;
             graphics.y = (window.innerHeight * zoom - grid.height)/2;// + window.innerHeight/2;
         });
@@ -100,10 +111,8 @@ var Host = function(party) {
 
     function addScreen(data) {
 
-        //var randX = Math.random() * (window.innerWidth - 400) + 200;
-        //var randY = Math.random() * (window.innerHeight - 400) + 200;
-        var centerX = graphics.width/2;//(window.innerWidth - data.width)/2;
-        var centerY = graphics.height/2;//(window.innerHeight - data.height)/2;
+        var centerX = graphics.width/2 - data.width/2;
+        var centerY = graphics.height/2 - data.height/2;
 
         var gfx = new PIXI.Graphics();
         gfx.beginFill(0xFFFFFF, .75);
@@ -111,31 +120,27 @@ var Host = function(party) {
         var text = new PIXI.Text(data.id.substring(2), { font : '14px Courier' });
         text.x = data.width/2 - 60;
         text.y = data.height/2;
-
         var screen = new PIXI.Sprite();
         screen.interactive = true;
         screen.buttonMode = true;
-        screen.anchor.set(0.5);
         screen
             .on('mousedown', dragScreenStart)
             .on('mouseup', dragScreenEnd)
             .on('mouseupoutside', dragScreenEnd);
-        //screen.position.x = centerX;d
-        //screen.position.y = centerY;
         screen.addChild(gfx);
         screen.addChild(text);
         screen.screenID = data.id;
         screen.x = centerX;
         screen.y = centerY;
         screens.addChild(screen);
-        console.log(screen.width, screen.height);
+        screen.anchor.set(0.5);
+        console.log(data.id2);
+
         var screenObj = new Screen(data.id2, data.id, screen, { x:centerX, y:centerY }, { x:0, y:0 }, { x:0, y:0 }, data.width, data.height, data.orientation);
         host.screenArray.push(screenObj);
 
         var spriteArray = [];
-
-        for(var i = 2; i < graphics.children.length; i++) {
-
+        for(var i = 1; i < graphics.children.length-1; i++) {
             var sprite = graphics.children[i];
             var spriteData = {};
             spriteData.texture = sprite.texture.baseTexture.imageUrl;
@@ -145,9 +150,10 @@ var Host = function(party) {
 
         party.socket.emit('setupScreen', {
             screenID : data.id,
+            screenIndex : data.id2,
             offset : {
-                x : centerX - data.width/2,
-                y : centerY - data.height/2
+                x : centerX,
+                y : centerY
             },
             graphics : spriteArray
         });
@@ -204,17 +210,20 @@ var Host = function(party) {
         var sprite = new PIXI.Sprite(texture);
         sprite.interactive = true;
         sprite.buttonMode = true;
-        //sprite.anchor.set(0.5);
         sprite.alpha = .5;
-        sprite.x = 0;
-        sprite.y = 0;
         sprite
             .on('mousedown', dragSpriteStart)
             .on('mouseup', dragSpriteEnd)
             .on('mouseupoutside', dragSpriteEnd);
-
-        host.graphics.addChild(sprite);
-        sprite.index = host.graphics.children.length-1;
+        graphics.addChild(sprite);
+        graphics.removeChild(screens);
+        graphics.addChild(screens);
+        sprite.index = host.graphics.children.length - 1;
+        sprite.texture.baseTexture.on('loaded', function() {
+            sprite.x = graphics.width/2;
+            sprite.y = graphics.height/2;
+            sprite.anchor.set(0.5);
+        });
 
         var imgData = {
             texture: image,
@@ -295,18 +304,18 @@ var Host = function(party) {
         this.on('mousemove', dragSprite);
     }
     function dragSprite() {
-        this.position.x = event.clientX * 2 + this.offset.x;
-        this.position.y = event.clientY * 2 + this.offset.y;
-
-        console.log(this.index);
-        party.socket.emit('moveSprite', {
-            room:host.roomID,
-            spriteID:this.index,
-            position: {
-                x: this.position.x,
-                y: this.position.y
-            }
-        });
+        if(!draggingScreens) {
+            this.position.x = event.clientX * 2 + this.offset.x;
+            this.position.y = event.clientY * 2 + this.offset.y;
+            party.socket.emit('moveSprite', {
+                room:host.roomID,
+                spriteID:this.index,
+                position: {
+                    x: this.position.x,
+                    y: this.position.y
+                }
+            });
+        }
     }
     function dragSpriteEnd()  {
         this.off('mousemove', dragSprite);
@@ -321,12 +330,13 @@ var Host = function(party) {
 
     function empty(graphics) { // duplicated, move to main.js or create utils.js
 
-        for (var i = graphics.children.length - 1; i > 1; i--) {
+        for (var i = 1; i < graphics.children.length; i++) {
             graphics.removeChild(graphics.children[i]);
         };
     }
 
     var Screen = function(id, socket, sprite, position, velocity, prevVelocity, width, height, orientation) {
+        this.id = id;
         this.socket = socket;
         this.sprite = sprite;
         this.position = position;

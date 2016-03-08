@@ -72,6 +72,8 @@ io.on('connection', function (socket) {
             });
             console.log(colors.gray("there are now", clientAmount, "sockets in room", _roomID, "including the host"));
             socket.emit('roomFound');
+            socket.on('motion', function(data) { io.to(hosts[data.roomID].id).emit('screenMotion', data); }); //io.to(hosts[data.roomID]).emit('screenMotion', data.movement); });
+            //io.to(hosts[data.roomID])})
         }
         else {  // room doesn't exist
             console.log(colors.red("room not found"));
@@ -87,7 +89,7 @@ io.on('connection', function (socket) {
         socket
             .join(_roomID)
             .emit('roomCreated', { id: _roomID })
-            .on('addSprite', function(data) { io.to([data.roomID]).emit('addSprite', data.image); })
+            .on('addSprite', function(data) { io.to([data.roomID]).emit('addSprite', data.image); }) // do we need the [ ] after .to?
             .on('moveSprite', function(data) { io.to([data.room]).emit('moveSprite', data); })
             .on('setupScreen', function(data) { io.to(data.screenID).emit('setYourself', data); })
             .on('moveScreen', function(data) { io.to(data.screenID).emit('adjustContainer', data); })
