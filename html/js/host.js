@@ -31,6 +31,16 @@ var Host = function(party) {
         party.socket.on('clientAdded', addScreen);
         party.socket.on('screenMoved', moveScreen);
         party.socket.on('screenMotion', motionScreen);
+        party.socket.on('screenStop', screenStop);
+
+        window.addEventListener('resize', debouncedResize);
+    }
+
+    var debouncedResize = debounce(resize, 100);
+
+    function resize() {
+
+        console.log(window.innerWidth, window.innerHeight);
     }
 
 
@@ -40,12 +50,19 @@ var Host = function(party) {
             if(screenArray[i].id == data.index) {
 
                 var screen = screenArray[i];
-                screen.velocity.x += data.movement.x;
+                screen.velocity.x -= data.movement.x;
                 screen.velocity.y += data.movement.y;
+            }
+        }
+    }
 
-                console.log(screen.velocity.x, screen.velocity.y);
-                screen.sprite.x += screen.velocity.x;
-                screen.sprite.y += screen.velocity.y;
+    function screenStop(data) {
+
+        for(var i = 0; i < screenArray.length; i++) {
+            if(screenArray[i].id == data.index) {
+                var screen = screenArray[i];
+                screen.velocity.x = 0;
+                screen.velocity.y = 0;
             }
         }
     }
@@ -86,7 +103,7 @@ var Host = function(party) {
 
         //stage.scale.set(0.5);
 
-        render();
+        update();
     }
 
     function roomCreated(data) {
@@ -235,9 +252,25 @@ var Host = function(party) {
         party.socket.emit('addSprite', { roomID: host.roomID, image:imgData });
     }
 
+    function update() {
+
+        updateScreenPositions();
+        render();
+        requestAnimationFrame(update);
+    }
+
+    function updateScreenPositions() {
+
+        for(var i = 0; i < screenArray.length; i++) {
+            var screen = screenArray[i];
+            screen.sprite.x += screen.velocity.x;
+            screen.sprite.y += screen.velocity.y;
+        }
+    }
+
     function render() {
+
         renderer.render(stage);
-        requestAnimationFrame(render);
     }
 
 

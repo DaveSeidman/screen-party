@@ -150,9 +150,8 @@ var Client = function(party) {
 
     function screenMovement(event) {
 
-        if(Math.abs(event.acceleration.x) > 0.25 || Math.abs(event.acceleration.y) > 0.25) {
-            party.socket.emit('motion',
-            {
+        if(Math.abs(event.acceleration.x) > 0.1 || Math.abs(event.acceleration.y) > 0.1) {
+            party.socket.emit('motion', {
                 roomID:client.roomID,
                 socket:party.socket.id,
                 index:client.screenIndex,
@@ -160,6 +159,13 @@ var Client = function(party) {
                     x: event.acceleration.x,
                     y: event.acceleration.y
                 }
+            });
+        }
+        else {
+            party.socket.emit('stop', {
+                roomID:client.roomID,
+                socket:party.socket.id,
+                index:client.screenIndex
             });
         }
     }

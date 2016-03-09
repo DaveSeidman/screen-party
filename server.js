@@ -72,8 +72,16 @@ io.on('connection', function (socket) {
             });
             console.log(colors.gray("there are now", clientAmount, "sockets in room", _roomID, "including the host"));
             socket.emit('roomFound');
-            socket.on('motion', function(data) { io.to(hosts[data.roomID].id).emit('screenMotion', data); }); //io.to(hosts[data.roomID]).emit('screenMotion', data.movement); });
-            //io.to(hosts[data.roomID])})
+            socket.on('motion', function(data) {
+                if(hosts[data.roomID]) {
+                    io.to(hosts[data.roomID].id).emit('screenMotion', data);
+                }
+            });
+            socket.on('stop', function(data) {
+                if(hosts[data.roomID]) {
+                    io.to(hosts[data.roomID].id).emit('screenStop', data);
+                }
+            })
         }
         else {  // room doesn't exist
             console.log(colors.red("room not found"));
