@@ -1,7 +1,5 @@
 // TO DO
-//mouse movement consistent with zoom (ie, .5 zoom, 2x mouse movement)
-// layer screens ABOVE graphics
-// when screen gets graphic, grid disappears
+// when screen gets graphic, grid goes black (mobile only?)
 
 
 var Host = function(party) {
@@ -29,10 +27,8 @@ var Host = function(party) {
         party.socket.on('roomCreated', roomCreated);
         party.socket.on('clientLeft', removeScreen);
         party.socket.on('clientAdded', addScreen);
-        party.socket.on('screenMoved', moveScreen);
         party.socket.on('screenMotion', motionScreen);
         party.socket.on('screenStop', screenStop);
-
         window.addEventListener('resize', debouncedResize);
     }
 
@@ -74,13 +70,10 @@ var Host = function(party) {
         host.stage = stage = new PIXI.Container();
         host.graphics = graphics = new PIXI.Container();
         host.screens = screens = new PIXI.Container();
-
         stage.addChild(graphics);
 
         var gridTexture = PIXI.Texture.fromImage('img/grid.jpg');
-
         var grid = new PIXI.Sprite(gridTexture);
-
 
         grid.interactive = true;
         grid.buttonMode = true;
@@ -114,9 +107,6 @@ var Host = function(party) {
         roomText.x = window.innerWidth - 120;
         roomText.y = window.innerHeight;
         stage.addChild(roomText);
-
-        //graphics.x = -graphics.width/2;
-        //stage.scale.set(1/zoom);
 
         document.onkeypress = function(e) {
             if(e.keyCode == 99) addSprite('../img/catPhoto.jpg');
@@ -189,37 +179,6 @@ var Host = function(party) {
     }
 
 
-    function moveScreen(data) {
-
-        //console.log(data);
-        //console.log(data.movement.x);
-        for(var i = 0; i < host.screens.length; i++) {   // these loops should be replaced with associative arrays, the key being the socket id
-            var screen = host.screens[i];
-
-            //screen.velocity.x = screen.prevVelocity.x + data.movement.x;
-            screen.velocity += data.movement.x/100;
-            //screen.velocity.y = screen.prevVelocity.y + data.movement.y;
-
-            screen.sprite.x += screen.velocity.x;
-            //    console.log(data.movement.x, screen.velocity.x, screen.sprite.x);
-
-            //screen.sprite.y += screen.velocity.y;
-
-            //screen.prevVelocity.x = screen.velocity.x;
-            //screen.prevVelocity.y = screen.velocity.y;
-
-            //screen.sprite.x = screen.position.x;
-            //screen.sprite.y = screen.position.y;
-        }
-    }
-
-
-
-
-    function clearCanvas() {
-        empty(graphics);
-        party.socket.emit('clearStage', { roomID:host.roomID } );
-    }
 
     function addSprite(image) {
 
@@ -252,26 +211,6 @@ var Host = function(party) {
         party.socket.emit('addSprite', { roomID: host.roomID, image:imgData });
     }
 
-    function update() {
-
-        updateScreenPositions();
-        render();
-        requestAnimationFrame(update);
-    }
-
-    function updateScreenPositions() {
-
-        for(var i = 0; i < screenArray.length; i++) {
-            var screen = screenArray[i];
-            screen.sprite.x += screen.velocity.x;
-            screen.sprite.y += screen.velocity.y;
-        }
-    }
-
-    function render() {
-
-        renderer.render(stage);
-    }
 
 
 
@@ -330,16 +269,15 @@ var Host = function(party) {
 
     function dragSpriteStart(event)  {
         this.offset = {
-            x: this.x - event.data.originalEvent.x * 2,
-            y: this.y - event.data.originalEvent.y * 2
+            x: this.x - event.data.originalEvent.x * zoom,
+            y: this.y - event.data.originalEvent.y * zoom
         };
-
         this.on('mousemove', dragSprite);
     }
     function dragSprite() {
         if(!draggingScreens) {
-            this.position.x = event.clientX * 2 + this.offset.x;
-            this.position.y = event.clientY * 2 + this.offset.y;
+            this.position.x = event.clientX * zoom + this.offset.x;
+            this.position.y = event.clientY * zoom + this.offset.y;
             party.socket.emit('moveSprite', {
                 room:host.roomID,
                 spriteID:this.index,
@@ -356,17 +294,48 @@ var Host = function(party) {
 
 
 
-
-
-
-
-
-    function empty(graphics) { // duplicated, move to main.js or create utils.js
-
-        for (var i = 1; i < graphics.children.length; i++) {
-            graphics.removeChild(graphics.children[i]);
-        };
+    function clearCanvas() {
+        empty(graphics);
+        party.socket.emit('clearStage', { roomID:host.roomID } );
     }
+
+
+    function update() {
+
+        updateScreenPositions();
+        render();
+        requestAnimationFrame(update);
+    }
+
+    function updateScreenPositions() {
+
+        for(var i = 0; i < screenArray.length; i++) {
+            var screen = screenArray[i];
+            //screen.velocity.x *= 0.95;
+            //screen.velocity.y *= 0.95;
+            if(screen.velocity.x < 0.1) screen.velocity.x = 0;
+            else screen.sprite.x += screen.velocity.x;
+            if(screen.velocity.y < 0.1) screen.velocity.y = 0;
+            else screen.sprite.y += screen.velocity.y;
+            if(screen.velocity.x || screen.velocity.y) {
+                party.socket.emit('moveScreen', {
+                    screenID : screen.ID,
+                    offset : {
+                        x : -screen.sprite.x,
+                        y : -screen.sprite.y
+                    }
+                });
+            }
+        }
+    }
+
+    function render() {
+
+        renderer.render(stage);
+    }
+
+
+
 
     var Screen = function(id, socket, sprite, position, velocity, prevVelocity, width, height, orientation) {
         this.id = id;

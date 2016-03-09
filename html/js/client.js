@@ -5,9 +5,7 @@ var Client = function(party) {
     var graphics;
     var roomText;
     var screenIndex;
-
     var agent = getAgent();
-
 
     connect();
     listen();
