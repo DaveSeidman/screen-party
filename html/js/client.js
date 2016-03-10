@@ -62,6 +62,7 @@ var Client = function(party) {
         roomText.x = window.innerWidth/2 - 50;
         roomText.y = window.innerHeight/2;
         stage.addChild(roomText);
+        clearCanvas();
     }
 
 
