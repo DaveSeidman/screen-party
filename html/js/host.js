@@ -41,28 +41,7 @@ var Host = function(party) {
     }
 
 
-    function motionScreen(data) {
 
-        for(var i = 0; i < screenArray.length; i++) {
-            if(screenArray[i].id == data.index) {
-
-                var screen = screenArray[i];
-                screen.velocity.x -= data.movement.x;
-                screen.velocity.y += data.movement.y;
-            }
-        }
-    }
-
-    function screenStop(data) {
-
-        for(var i = 0; i < screenArray.length; i++) {
-            if(screenArray[i].id == data.index) {
-                var screen = screenArray[i];
-                screen.velocity.x = 0;
-                screen.velocity.y = 0;
-            }
-        }
-    }
 
     function createCanvas() {
 
@@ -76,6 +55,7 @@ var Host = function(party) {
         grid = new PIXI.Sprite(gridTexture);
         grid.interactive = true;
         grid.buttonMode = true;
+        grid.type = "container";
         grid.on('mousedown', dragStart).on('mouseup', dragEnd).on('mouseupoutside', dragEnd);
 
         stage.addChild(grid);
@@ -86,8 +66,6 @@ var Host = function(party) {
 
         grid.texture.baseTexture.on('loaded', function() {
             stage.scale.set(zoom);
-            //graphics.x = (window.innerWidth * 1/zoom - grid.width)/2;// + window.innerWidth/2;
-            //graphics.y = (window.innerHeight * 1/zoom - grid.height)/2;// + window.innerHeight/2;
         });
 
         update();
@@ -124,6 +102,7 @@ var Host = function(party) {
         var screen = new PIXI.Sprite();
         screen.interactive = true;
         screen.buttonMode = true;
+        screen.type = "screen";
         screen.on('mousedown', dragStart).on('mouseup', dragEnd).on('mouseupoutside', dragEnd);
         screen.addChild(gfx);
         screen.addChild(text);
@@ -179,6 +158,7 @@ var Host = function(party) {
         //sprite.alpha = 0.5;
         sprite.on('mousedown', dragStart).on('mouseup', dragEnd).on('mouseupoutside', dragEnd);
         graphics.addChild(sprite);
+        sprite.type = "graphic";
         //graphics.removeChild(screens);
         //graphics.addChild(screens);
         sprite.index = host.graphics.children.length - 1;
@@ -198,87 +178,6 @@ var Host = function(party) {
         }
         party.socket.emit('addSprite', { roomID: host.roomID, image:imgData });
     }
-
-
-
-
-
-
-    // each of these drag functions are pretty similar but have some differences
-    // dragging screens needs to prevent dragging the grid
-    // might be able to combine all three.
-
-/*    function dragGridStart(event) {
-        this.offset = {
-            x: event.data.originalEvent.clientX * 1/zoom - graphics.position.x,
-            y: event.data.originalEvent.clientY * 1/zoom - graphics.position.y
-        };
-        this.on('mousemove', dragGrid);
-    }
-    function dragGrid(event) {
-        if(!draggingScreens) {
-            graphics.position.x = event.data.originalEvent.clientX * 1/zoom - this.offset.x;
-            graphics.position.y = event.data.originalEvent.clientY * 1/zoom - this.offset.y;
-        }
-    }
-    function dragGridEnd() {
-        this.off('mousemove', dragGrid);
-    }
-
-
-
-    function dragScreenStart(event)  {
-        this.offset = {
-            x: this.x - event.data.originalEvent.x * 1/zoom,
-            y: this.y - event.data.originalEvent.y * 1/zoom
-        };
-        draggingScreens = true;
-        this.on('mousemove', dragScreen);
-    }
-    function dragScreen() {
-        this.position.x = event.clientX * 1/zoom + this.offset.x;
-        this.position.y = event.clientY * 1/zoom + this.offset.y;
-        party.socket.emit('moveScreen', {
-            screenID : this.screenID,
-            offset : {
-                x : -this.position.x,
-                y : -this.position.y
-            }
-        });
-    }
-    function dragScreenEnd()  {
-        draggingScreens = false;
-        this.off('mousemove', dragScreen);
-    }
-
-
-
-
-
-    function dragSpriteStart(event)  {
-        this.offset = {
-            x: this.x - event.data.originalEvent.x * 1/zoom,
-            y: this.y - event.data.originalEvent.y * 1/zoom
-        };
-        this.on('mousemove', dragSprite);
-    }
-    function dragSprite() {
-        if(!draggingScreens) {
-            this.position.x = event.clientX * 1/zoom + this.offset.x;
-            this.position.y = event.clientY * 1/zoom + this.offset.y;
-            party.socket.emit('moveSprite', {
-                room:host.roomID,
-                spriteID:this.index,
-                position: {
-                    x: this.position.x,
-                    y: this.position.y
-                }
-            });
-        }
-    }
-    function dragSpriteEnd()  {
-        this.off('mousemove', dragSprite);
-    }*/
 
     var layers = [];
 
@@ -304,6 +203,9 @@ var Host = function(party) {
 
         layer.x = event.clientX * 1/zoom - layer.offset.x;
         layer.y = event.clientY * 1/zoom - layer.offset.y;
+
+        console.log(this.type);
+
         //this.position.x = event.clientX * 1/zoom + this.offset.x;
         //this.position.y = event.clientY * 1/zoom + this.offset.y;
         /*party.socket.emit('moveSprite', {
@@ -316,18 +218,48 @@ var Host = function(party) {
         });*/
     }
 
-
     function clearCanvas() {
         empty(graphics);
         party.socket.emit('clearStage', { roomID:host.roomID } );
     }
-
 
     function update() {
 
         updateScreenPositions();
         render();
         requestAnimationFrame(update);
+    }
+    function render() {
+
+        renderer.render(stage);
+    }
+
+
+
+
+
+
+    function motionScreen(data) {
+
+        for(var i = 0; i < screenArray.length; i++) {
+            if(screenArray[i].id == data.index) {
+
+                var screen = screenArray[i];
+                screen.velocity.x -= data.movement.x;
+                screen.velocity.y += data.movement.y;
+            }
+        }
+    }
+
+    function screenStop(data) {
+
+        for(var i = 0; i < screenArray.length; i++) {
+            if(screenArray[i].id == data.index) {
+                var screen = screenArray[i];
+                screen.velocity.x = 0;
+                screen.velocity.y = 0;
+            }
+        }
     }
 
     function updateScreenPositions() {
@@ -352,10 +284,6 @@ var Host = function(party) {
         }
     }
 
-    function render() {
-
-        renderer.render(stage);
-    }
 
 
 
