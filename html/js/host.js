@@ -55,7 +55,7 @@ var Host = function(party) {
         grid = new PIXI.Sprite(gridTexture);
         grid.interactive = true;
         grid.buttonMode = true;
-        grid.type = "container";
+        grid.dragEvent = "moveContainer";
         grid.on('mousedown', dragStart).on('mouseup', dragEnd).on('mouseupoutside', dragEnd);
 
         stage.addChild(grid);
@@ -102,11 +102,12 @@ var Host = function(party) {
         var screen = new PIXI.Sprite();
         screen.interactive = true;
         screen.buttonMode = true;
-        screen.type = "screen";
+        screen.dragEvent = "moveScreen";
         screen.on('mousedown', dragStart).on('mouseup', dragEnd).on('mouseupoutside', dragEnd);
         screen.addChild(gfx);
         screen.addChild(text);
-        screen.screenID = data.id;
+        screen.screenID = data.id; // <-- remove this
+        screen.id = data.id;
         //screen.x = centerX;
         //screen.y = centerY;
         screens.addChild(screen);
@@ -158,10 +159,10 @@ var Host = function(party) {
         //sprite.alpha = 0.5;
         sprite.on('mousedown', dragStart).on('mouseup', dragEnd).on('mouseupoutside', dragEnd);
         graphics.addChild(sprite);
-        sprite.type = "graphic";
+        sprite.dragEvent = "moveGraphic";
         //graphics.removeChild(screens);
         //graphics.addChild(screens);
-        sprite.index = host.graphics.children.length - 1;
+        sprite.id = host.graphics.children.length - 1;
         sprite.texture.baseTexture.on('loaded', function() {
             sprite.x = graphics.width/2;
             sprite.y = graphics.height/2;
@@ -206,16 +207,23 @@ var Host = function(party) {
 
         console.log(this.type);
 
-        //this.position.x = event.clientX * 1/zoom + this.offset.x;
-        //this.position.y = event.clientY * 1/zoom + this.offset.y;
-        /*party.socket.emit('moveSprite', {
-            room:host.roomID,
-            spriteID:this.index,
-            position: {
-                x: this.position.x,
-                y: this.position.y
-            }
-        });*/
+        if(this.dragEvent == "moveContainer") {
+            // move graphics
+            graphics.x = layer.x;
+            graphics.y = layer.y;
+        }
+        else {
+            // tell server we're moving graphic or screen
+            party.socket.emit(this.type, {
+                room:host.roomID,
+                id:this.id,
+                position: {
+                    x: this.position.x,
+                    y: this.position.y
+                }
+            });
+
+        }
     }
 
     function clearCanvas() {
