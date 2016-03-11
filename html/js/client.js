@@ -90,7 +90,7 @@ var Client = function(party) {
 
         console.log(data.screenIndex);
         client.screenIndex = screenIndex = data.screenIndex;
-        var gridTexture = PIXI.Texture.fromImage('img/grid.jpg');
+        var gridTexture = PIXI.Texture.fromImage('img/grid2.jpg');
         var grid = new PIXI.Sprite(gridTexture);
         graphics.addChild(grid);
         grid.texture.baseTexture.on('loaded', function() {

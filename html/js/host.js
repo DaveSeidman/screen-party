@@ -71,25 +71,23 @@ var Host = function(party) {
         host.stage = stage = new PIXI.Container();
         host.graphics = graphics = new PIXI.Container();
         host.screens = screens = new PIXI.Container();
-        stage.addChild(graphics);
-        var gridTexture = PIXI.Texture.fromImage('img/grid.jpg');
+
+        var gridTexture = PIXI.Texture.fromImage('img/grid2.jpg');
         grid = new PIXI.Sprite(gridTexture);
         grid.interactive = true;
         grid.buttonMode = true;
-        grid
-            .on('mousedown', dragStart)
-            .on('mouseup', dragEnd)
-            .on('mouseupoutside', dragEnd);
+        grid.on('mousedown', dragStart).on('mouseup', dragEnd).on('mouseupoutside', dragEnd);
 
-        graphics.addChild(grid);
-        graphics.addChild(screens);
+        stage.addChild(grid);
+        stage.addChild(graphics);
+        stage.addChild(screens);
 
         document.body.appendChild(renderer.view);
 
         grid.texture.baseTexture.on('loaded', function() {
             stage.scale.set(zoom);
-            graphics.x = (window.innerWidth * 1/zoom - grid.width)/2;// + window.innerWidth/2;
-            graphics.y = (window.innerHeight * 1/zoom - grid.height)/2;// + window.innerHeight/2;
+            //graphics.x = (window.innerWidth * 1/zoom - grid.width)/2;// + window.innerWidth/2;
+            //graphics.y = (window.innerHeight * 1/zoom - grid.height)/2;// + window.innerHeight/2;
         });
 
         update();
@@ -130,8 +128,8 @@ var Host = function(party) {
         screen.addChild(gfx);
         screen.addChild(text);
         screen.screenID = data.id;
-        screen.x = centerX;
-        screen.y = centerY;
+        //screen.x = centerX;
+        //screen.y = centerY;
         screens.addChild(screen);
         screen.anchor.set(0.5);
 
@@ -181,12 +179,13 @@ var Host = function(party) {
         //sprite.alpha = 0.5;
         sprite.on('mousedown', dragStart).on('mouseup', dragEnd).on('mouseupoutside', dragEnd);
         graphics.addChild(sprite);
-        graphics.removeChild(screens);
-        graphics.addChild(screens);
+        //graphics.removeChild(screens);
+        //graphics.addChild(screens);
         sprite.index = host.graphics.children.length - 1;
         sprite.texture.baseTexture.on('loaded', function() {
-            //sprite.x = graphics.width/2;
-            //sprite.y = graphics.height/2;
+            sprite.x = graphics.width/2;
+            sprite.y = graphics.height/2;
+            console.log("sprite loaded", graphics.width, graphics.height);
             sprite.anchor.set(0.5);
         });
 
@@ -209,7 +208,7 @@ var Host = function(party) {
     // dragging screens needs to prevent dragging the grid
     // might be able to combine all three.
 
-    function dragGridStart(event) {
+/*    function dragGridStart(event) {
         this.offset = {
             x: event.data.originalEvent.clientX * 1/zoom - graphics.position.x,
             y: event.data.originalEvent.clientY * 1/zoom - graphics.position.y
@@ -279,8 +278,9 @@ var Host = function(party) {
     }
     function dragSpriteEnd()  {
         this.off('mousemove', dragSprite);
-    }
+    }*/
 
+    var layers = [];
 
     function dragStart() {
 
@@ -288,18 +288,22 @@ var Host = function(party) {
             x: event.clientX * 1/zoom - this.x,
             y: event.clientY * 1/zoom - this.y
         }
+        layers.push(this);
         this.on('mousemove', drag);
     }
 
     function dragEnd() {
 
         this.off('mousemove', drag);
+        layers.splice(this);
     }
 
     function drag() {
 
-        this.x = event.clientX * 1/zoom - this.offset.x;
-        this.y = event.clientY * 1/zoom - this.offset.y;
+        var layer = layers[0]; // only take top most mouse event
+
+        layer.x = event.clientX * 1/zoom - layer.offset.x;
+        layer.y = event.clientY * 1/zoom - layer.offset.y;
         //this.position.x = event.clientX * 1/zoom + this.offset.x;
         //this.position.y = event.clientY * 1/zoom + this.offset.y;
         /*party.socket.emit('moveSprite', {
