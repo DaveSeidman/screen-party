@@ -1,23 +1,7 @@
 // to do
-// this file not being used, i suppose the idea would be to offload some of the server code to here or another .js file
+// this file not being used, todo: offload some of the server code here or to another .js file
 
-var ScreenParty = function () {
-
-  var _this = this;
-
-  _this.x = 5;
-  _this.y = 10;
-
-  function getX () {
-
-    return x;
-  }
-
-  function getY() {
-
-    return y;
-  }
+var ScreenParty = (function () {
 
 
-  return _this;
-}();
+}) ();
