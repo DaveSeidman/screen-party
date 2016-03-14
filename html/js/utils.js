@@ -10,10 +10,3 @@ function debounce(func, wait, immediate) {
         if (immediate && !timeout) func.apply(context, args);
     };
 };
-
-function empty(graphics) { // duplicated, move to main.js or create utils.js
-
-    for (var i = 0; i < graphics.children.length; i++) {
-        graphics.removeChild(graphics.children[i]);
-    };
-}

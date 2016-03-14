@@ -6,13 +6,15 @@ var Client = function(party) {
     var roomText;
     var screenIndex;
     var agent = getAgent();
+    var socket;
+    var grid;
 
     connect();
     listen();
     createCanvas();
 
     function connect() {
-        party.socket = io.connect(party.ipAddress + ':80', {
+        party.socket = socket = io.connect(party.ipAddress + ':80', {
             transports: ['websocket'],
             query:
             "roomID=" + window.location.hash.substring(1) + "&" +
@@ -26,20 +28,23 @@ var Client = function(party) {
 
     function listen() {
 
-        party.socket.on('roomFound', roomFound);
-        party.socket.on('roomNotFound', roomNotFound);
-        party.socket.on('hostLeft', hostLeft);
-        party.socket.on('addSprite', addSprite);
-        party.socket.on('moveSprite', moveSprite);
-        party.socket.on('setYourself', setupScreen);
-        party.socket.on('moveScreen', moveScreen);
-        party.socket.on('clearCanvas', clearCanvas);
+        socket.on('roomFound', roomFound);
+        socket.on('roomNotFound', roomNotFound);
+        socket.on('hostLeft', hostLeft);
+        socket.on('addGraphic', addGraphic);
+        socket.on('moveGraphic', moveGraphic);
+        socket.on('setupScreen', setupScreen);
+        socket.on('moveScreen', moveScreen);
+        socket.on('clearCanvas', clearCanvas);
     }
+
+
+    // Room functions ----
 
     function roomFound(data) {
 
         stage.removeChild(roomText);
-        roomText = new PIXI.Text(party.socket.id, { font : '14px courier' });
+        roomText = new PIXI.Text(socket.id, { font : '14px courier' });
         roomText.x = window.innerWidth/2 - 70;
         roomText.y = window.innerHeight/2;
         stage.addChild(roomText);
@@ -53,11 +58,8 @@ var Client = function(party) {
         roomText.y = window.innerHeight/2;
         stage.addChild(roomText);
     }
-
     function hostLeft() {
-
         stage.removeChild(roomText);
-        empty(graphics);
         roomText = new PIXI.Text('Host Has Left', { font : '14px courier' });
         roomText.x = window.innerWidth/2 - 50;
         roomText.y = window.innerHeight/2;
@@ -66,46 +68,43 @@ var Client = function(party) {
     }
 
 
-    function addSprite(data) {
 
+
+
+    function setupScreen(data) {
+        client.screenIndex = screenIndex = data.screenIndex;
+
+        console.log(data);
+
+        for(var i = 0; i < data.graphics.length; i++) {
+
+            addGraphic(data.graphics[i]);
+        }
+        //window.addEventListener('devicemotion', screenMovement);
+    }
+
+    function addGraphic(data) {
         var texture = PIXI.Texture.fromImage(data.texture);
         sprite = new PIXI.Sprite(texture);
-        sprite.alpha = 1;
-
         graphics.addChild(sprite);
         sprite.texture.baseTexture.on('loaded', function() {
             sprite.x = data.position.x;
             sprite.y = data.position.y;
-            sprite.anchor.set(0.5);
+            //sprite.anchor.set(0.5);
         });
     }
 
-    function moveSprite(data) {
-
-        graphics.getChildAt(data.spriteID-1).x = data.position.x;
-        graphics.getChildAt(data.spriteID-1).y = data.position.y;
+    function moveGraphic(data) {
+        var graphic = graphics.getChildAt(data.id);
+        graphic.x = data.position.x;
+        graphic.y = data.position.y;
     }
 
-    function setupScreen(data) {
-        client.screenIndex = screenIndex = data.screenIndex;
-        var gridTexture = PIXI.Texture.fromImage('img/grid2.jpg');
-        var grid = new PIXI.Sprite(gridTexture);
-        graphics.addChild(grid);
-        grid.texture.baseTexture.on('loaded', function() {
-            graphics.x = -data.offset.x;
-            graphics.y = -data.offset.y;
-        });
 
-        for(var i = 0; i < data.graphics.length; i++) {
-
-            addSprite(data.graphics[i]);
-        }
-        window.addEventListener('devicemotion', screenMovement);
-    }
 
     function moveScreen(data) {
-        graphics.x = -data.position.x;
-        graphics.y = -data.position.y;
+        grid.x = graphics.x = -data.position.x;
+        grid.y = graphics.y = -data.position.y;
     }
 
     function assetMovement() {
@@ -118,8 +117,15 @@ var Client = function(party) {
         renderer.backgroundColor = 0x555555;
         client.stage = stage = new PIXI.Container();
         client.graphics = graphics = new PIXI.Container();
-        graphics.x = -3000;
-        graphics.y = -3000;
+        var gridTexture = PIXI.Texture.fromImage('img/grid2.jpg');
+        grid = new PIXI.Sprite(gridTexture);
+        stage.addChild(grid);
+        grid.texture.baseTexture.on('loaded', function() {
+            //graphics.x = -data.offset.x;
+            //graphics.y = -data.offset.y;
+        });
+        //graphics.x = -3000;
+        //graphics.y = -3000;
         stage.addChild(graphics);
         document.body.removeChild(document.getElementById('form'));
         document.body.appendChild(renderer.view);
@@ -127,7 +133,7 @@ var Client = function(party) {
     }
 
     function clearCanvas() {
-        empty(graphics);
+        graphics.removeChildren();
     }
 
     function empty(container) { // duplicated, move to main.js or create utils.js
@@ -147,9 +153,9 @@ var Client = function(party) {
     function screenMovement(event) {
 
         if(Math.abs(event.acceleration.x) > 0.1 || Math.abs(event.acceleration.y) > 0.1) {
-            party.socket.emit('motion', {
+            socket.emit('motion', {
                 roomID:client.roomID,
-                socket:party.socket.id,
+                socket:socket.id,
                 index:client.screenIndex,
                 movement: {
                     x: event.acceleration.x,
@@ -158,9 +164,9 @@ var Client = function(party) {
             });
         }
         else {
-            party.socket.emit('stop', {
+            socket.emit('stop', {
                 roomID:client.roomID,
-                socket:party.socket.id,
+                socket:socket.id,
                 index:client.screenIndex
             });
         }

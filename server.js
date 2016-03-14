@@ -62,6 +62,8 @@ io.on('connection', function (socket) {
             console.log(colors.gray("room found"));
             socket.join(_roomID);
             var clientAmount = io.sockets.adapter.rooms[_roomID].length;
+            console.log(colors.gray("there are now", clientAmount, "sockets in room", _roomID, "including the host"));
+
             hosts[_roomID].emit('clientAdded', {
                 id: socket.id,
                 id2: clientAmount,
@@ -70,18 +72,17 @@ io.on('connection', function (socket) {
                 height:_height,
                 orientation:_orientation
             });
-            console.log(colors.gray("there are now", clientAmount, "sockets in room", _roomID, "including the host"));
-            socket.emit('roomFound');
-            socket.on('motion', function(data) {
-                if(hosts[data.roomID]) {
-                    io.to(hosts[data.roomID].id).emit('screenMotion', data);
-                }
-            });
-            socket.on('stop', function(data) {
-                if(hosts[data.roomID]) {
-                    io.to(hosts[data.roomID].id).emit('screenStop', data);
-                }
-            })
+            socket.emit('roomFound')
+                .on('motion', function(data) {
+                    if(hosts[data.roomID]) {
+                        io.to(hosts[data.roomID].id).emit('screenMotion', data);
+                    }
+                })
+                .on('stop', function(data) {
+                    if(hosts[data.roomID]) {
+                        io.to(hosts[data.roomID].id).emit('screenStop', data);
+                    }
+                });
         }
         else {  // room doesn't exist
             console.log(colors.red("room not found"));
@@ -97,9 +98,9 @@ io.on('connection', function (socket) {
         socket
             .join(_roomID)
             .emit('roomCreated', { id: _roomID })
-            .on('addSprite', function(data) { io.to([data.roomID]).emit('addSprite', data.image); }) // do we need the [ ] after .to?
-            .on('setupScreen', function(data) { io.to(data.screenID).emit('setYourself', data); })
-            .on('moveGraphic', function(data) { io.to([data.room]).emit('moveSprite', data); })
+            .on('addGraphic', function(data) { io.to([data.id]).emit('addGraphic', data); }) // do we need the [ ] after .to?
+            .on('setupScreen', function(data) { io.to(data.id).emit('setupScreen', data); })
+            .on('moveGraphic', function(data) { io.to([data.room]).emit('moveGraphic', data); })
             .on('moveScreen', function(data) { io.to(data.id).emit('moveScreen', data); })
             .on('clearStage', function(data) { io.to(data.roomID).emit('clearCanvas'); });
 
