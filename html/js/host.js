@@ -26,11 +26,11 @@ var Host = function(party) {
     }
 
     function listen() {
-        socket.on('roomCreated', roomCreated);
-        socket.on('clientLeft', removeScreen);
-        socket.on('clientAdded', addScreen);
-        socket.on('screenMotion', motionScreen);
-        socket.on('screenStop', screenStop);
+        socket.on('roomCreated', roomCreated)
+              .on('clientLeft', removeScreen)
+              .on('clientAdded', addScreen)
+              .on('screenMotion', motionScreen)
+              .on('screenStop', screenStop);
         window.addEventListener('resize', debouncedResize);
     }
 
@@ -183,7 +183,7 @@ var Host = function(party) {
         }
         else {
 
-            if(this.id) {
+            if(this.id != undefined) {
                 // tell server we're moving graphic or screen
                 socket.emit(layer.dragEvent, {
                     room:host.roomID,

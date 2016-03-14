@@ -73,9 +73,6 @@ var Client = function(party) {
 
     function setupScreen(data) {
         client.screenIndex = screenIndex = data.screenIndex;
-
-        console.log(data);
-
         for(var i = 0; i < data.graphics.length; i++) {
 
             addGraphic(data.graphics[i]);
