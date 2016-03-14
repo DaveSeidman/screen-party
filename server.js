@@ -4,7 +4,7 @@
 // to store arrays of screens inside of rooms array
 
 
-// ssh -i freelunchkey.pem ec2-user@54.191.185.110
+// ssh -i private/freelunchkey.pem ec2-user@54.191.185.110
 //https://marvelapp.github.io/devices.css/
 
 // color scheme:
