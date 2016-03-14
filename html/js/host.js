@@ -43,34 +43,6 @@ var Host = function(party) {
 
 
 
-    function createCanvas() {
-
-        renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
-        renderer.backgroundColor = 0x555555;
-        host.stage = stage = new PIXI.Container();
-        host.graphics = graphics = new PIXI.Container();
-        host.screens = screens = new PIXI.Container();
-
-        var gridTexture = PIXI.Texture.fromImage('img/grid2.jpg');
-        grid = new PIXI.Sprite(gridTexture);
-        grid.interactive = true;
-        grid.buttonMode = true;
-        grid.dragEvent = "moveContainer";
-        grid.on('mousedown', dragStart).on('mouseup', dragEnd).on('mouseupoutside', dragEnd);
-
-        stage.addChild(grid);
-        stage.addChild(graphics);
-        stage.addChild(screens);
-
-        document.body.appendChild(renderer.view);
-
-        grid.texture.baseTexture.on('loaded', function() {
-            stage.scale.set(zoom);
-        });
-
-        update();
-    }
-
     function roomCreated(data) {
 
         host.roomID = data.id;
@@ -81,9 +53,9 @@ var Host = function(party) {
         stage.addChild(roomText);
 
         document.onkeypress = function(e) {
-            if(e.keyCode == 99) addSprite('../img/catPhoto.jpg');
-            if(e.keyCode == 100) addSprite('../img/dogPhoto.jpg');
-            if(e.keyCode == 115) addSprite('../img/slothPhoto.jpg');
+            if(e.keyCode == 99) addGraphic('../img/catPhoto.jpg');
+            if(e.keyCode == 100) addGraphic('../img/dogPhoto.jpg');
+            if(e.keyCode == 115) addGraphic('../img/slothPhoto.jpg');
             if(e.keyCode == 32) clearCanvas();
         };
     }
@@ -94,27 +66,27 @@ var Host = function(party) {
         var centerY = grid.height/2 - data.height/2;
 
         var gfx = new PIXI.Graphics();
+        var sprite = new PIXI.Sprite();
+
         gfx.beginFill(0xFFFFFF, .75);
         gfx.drawRect(0, 0, data.width, data.height);
-        var text = new PIXI.Text(data.id.substring(2), { font : '14px Courier' });
-        text.x = data.width/2 - 60;
+        var text = new PIXI.Text(data.id.substring(2), { font : '28px Courier' });
+        text.x = data.width/2 - 150;
         text.y = data.height/2;
-        var screen = new PIXI.Sprite();
-        screen.interactive = true;
-        screen.buttonMode = true;
-        screen.dragEvent = "moveScreen";
-        screen.on('mousedown', dragStart).on('mouseup', dragEnd).on('mouseupoutside', dragEnd);
-        screen.addChild(gfx);
-        screen.addChild(text);
-        screen.screenID = data.id; // <-- remove this
-        screen.id = data.id;
-        //screen.x = centerX;
-        //screen.y = centerY;
-        screens.addChild(screen);
-        screen.anchor.set(0.5);
+        sprite.interactive = true;
+        sprite.buttonMode = true;
+        sprite.dragEvent = "moveScreen";
+        sprite.on('mousedown', dragStart).on('mouseup', dragEnd).on('mouseupoutside', dragEnd);
+        sprite.addChild(gfx);
+        sprite.addChild(text);
+        sprite.screenID = data.id; // <-- remove this
+        sprite.id = data.id;
 
-        var screenObj = new Screen(data.id2, data.id, screen, { x:centerX, y:centerY }, { x:0, y:0 }, { x:0, y:0 }, data.width, data.height, data.orientation);
-        host.screenArray.push(screenObj);
+        screens.addChild(sprite);
+        sprite.anchor.set(0.5);
+
+        var screen = new Screen(data.id2, data.id, sprite, { x:centerX, y:centerY }, { x:0, y:0 }, { x:0, y:0 }, data.width, data.height, data.orientation);
+        screenArray.push(screen);
 
         var spriteArray = [];
         for(var i = 1; i < graphics.children.length-1; i++) {
@@ -150,18 +122,15 @@ var Host = function(party) {
 
 
 
-    function addSprite(image) {
+    function addGraphic(image) {
 
         var texture = PIXI.Texture.fromImage(image);
         var sprite = new PIXI.Sprite(texture);
         sprite.interactive = true;
         sprite.buttonMode = true;
-        //sprite.alpha = 0.5;
         sprite.on('mousedown', dragStart).on('mouseup', dragEnd).on('mouseupoutside', dragEnd);
         graphics.addChild(sprite);
         sprite.dragEvent = "moveGraphic";
-        //graphics.removeChild(screens);
-        //graphics.addChild(screens);
         sprite.id = host.graphics.children.length - 1;
         sprite.texture.baseTexture.on('loaded', function() {
             sprite.x = graphics.width/2;
@@ -177,13 +146,12 @@ var Host = function(party) {
                 y: sprite.y
             }
         }
-        party.socket.emit('addSprite', { roomID: host.roomID, image:imgData });
+        party.socket.emit('addGraphic', { roomID: host.roomID, image:imgData });
     }
 
     var layers = [];
 
     function dragStart() {
-
         this.offset = {
             x: event.clientX * 1/zoom - this.x,
             y: event.clientY * 1/zoom - this.y
@@ -191,9 +159,7 @@ var Host = function(party) {
         layers.push(this);
         this.on('mousemove', drag);
     }
-
     function dragEnd() {
-
         this.off('mousemove', drag);
         layers.splice(this);
     }
@@ -205,8 +171,6 @@ var Host = function(party) {
         layer.x = event.clientX * 1/zoom - layer.offset.x;
         layer.y = event.clientY * 1/zoom - layer.offset.y;
 
-        console.log(this.dragEvent);
-
         if(layer.dragEvent == "moveContainer") {
             // move graphics
             graphics.x = screens.x = layer.x;
@@ -214,7 +178,7 @@ var Host = function(party) {
         }
         else {
             // tell server we're moving graphic or screen
-            party.socket.emit(this.type, {
+            party.socket.emit(layer.dragEvent, {
                 room:host.roomID,
                 id:this.id,
                 position: {
@@ -226,11 +190,42 @@ var Host = function(party) {
         }
     }
 
+
+
+
+    // Canvas functions
+
+    function createCanvas() {
+
+        renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
+        renderer.backgroundColor = 0x555555;
+        host.stage = stage = new PIXI.Container();
+        host.graphics = graphics = new PIXI.Container();
+        host.screens = screens = new PIXI.Container();
+
+        var gridTexture = PIXI.Texture.fromImage('img/grid2.jpg');
+        grid = new PIXI.Sprite(gridTexture);
+        grid.interactive = true;
+        grid.buttonMode = true;
+        grid.dragEvent = "moveContainer";
+        grid.on('mousedown', dragStart).on('mouseup', dragEnd).on('mouseupoutside', dragEnd);
+
+        stage.addChild(grid);
+        stage.addChild(graphics);
+        stage.addChild(screens);
+
+        document.body.appendChild(renderer.view);
+
+        grid.texture.baseTexture.on('loaded', function() {
+            stage.scale.set(zoom);
+        });
+
+        update();
+    }
     function clearCanvas() {
         empty(graphics);
         party.socket.emit('clearStage', { roomID:host.roomID } );
     }
-
     function update() {
 
         updateScreenPositions();
