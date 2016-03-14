@@ -98,9 +98,9 @@ io.on('connection', function (socket) {
             .join(_roomID)
             .emit('roomCreated', { id: _roomID })
             .on('addSprite', function(data) { io.to([data.roomID]).emit('addSprite', data.image); }) // do we need the [ ] after .to?
-            .on('moveSprite', function(data) { io.to([data.room]).emit('moveSprite', data); })
             .on('setupScreen', function(data) { io.to(data.screenID).emit('setYourself', data); })
-            .on('moveScreen', function(data) { io.to(data.screenID).emit('adjustContainer', data); })
+            .on('moveGraphic', function(data) { io.to([data.room]).emit('moveSprite', data); })
+            .on('moveScreen', function(data) { io.to(data.id).emit('moveScreen', data); })
             .on('clearStage', function(data) { io.to(data.roomID).emit('clearCanvas'); });
 
         console.log(colors.cyan("no roomID found, creating one", _roomID));

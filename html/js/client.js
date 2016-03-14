@@ -32,7 +32,7 @@ var Client = function(party) {
         party.socket.on('addSprite', addSprite);
         party.socket.on('moveSprite', moveSprite);
         party.socket.on('setYourself', setupScreen);
-        party.socket.on('adjustContainer', adjustContainer);
+        party.socket.on('moveScreen', moveScreen);
         party.socket.on('clearCanvas', clearCanvas);
     }
 
@@ -87,8 +87,6 @@ var Client = function(party) {
     }
 
     function setupScreen(data) {
-
-        console.log(data.screenIndex);
         client.screenIndex = screenIndex = data.screenIndex;
         var gridTexture = PIXI.Texture.fromImage('img/grid2.jpg');
         var grid = new PIXI.Sprite(gridTexture);
@@ -105,10 +103,9 @@ var Client = function(party) {
         window.addEventListener('devicemotion', screenMovement);
     }
 
-    function adjustContainer(data) {
-        // combine this and just use a point?
-        graphics.x = data.offset.x;
-        graphics.y = data.offset.y;
+    function moveScreen(data) {
+        graphics.x = -data.position.x;
+        graphics.y = -data.position.y;
     }
 
     function assetMovement() {

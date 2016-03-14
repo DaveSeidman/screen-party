@@ -135,7 +135,6 @@ var Host = function(party) {
         sprite.texture.baseTexture.on('loaded', function() {
             sprite.x = graphics.width/2;
             sprite.y = graphics.height/2;
-            console.log("sprite loaded", graphics.width, graphics.height);
             sprite.anchor.set(0.5);
         });
 
@@ -186,7 +185,6 @@ var Host = function(party) {
                     y: this.position.y
                 }
             });
-
         }
     }
 
