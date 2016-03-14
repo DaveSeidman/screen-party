@@ -118,7 +118,7 @@ var Client = function(party) {
 
     function createCanvas() {
         renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
-        renderer.backgroundColor = 0xCCCCCC;
+        renderer.backgroundColor = 0x555555;
         client.stage = stage = new PIXI.Container();
         client.graphics = graphics = new PIXI.Container();
         graphics.x = -3000;

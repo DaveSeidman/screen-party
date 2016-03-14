@@ -46,7 +46,7 @@ var Host = function(party) {
     function createCanvas() {
 
         renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
-        renderer.backgroundColor = 0xCCCCCC;
+        renderer.backgroundColor = 0x555555;
         host.stage = stage = new PIXI.Container();
         host.graphics = graphics = new PIXI.Container();
         host.screens = screens = new PIXI.Container();
@@ -205,12 +205,12 @@ var Host = function(party) {
         layer.x = event.clientX * 1/zoom - layer.offset.x;
         layer.y = event.clientY * 1/zoom - layer.offset.y;
 
-        console.log(this.type);
+        console.log(this.dragEvent);
 
-        if(this.dragEvent == "moveContainer") {
+        if(layer.dragEvent == "moveContainer") {
             // move graphics
-            graphics.x = layer.x;
-            graphics.y = layer.y;
+            graphics.x = screens.x = layer.x;
+            graphics.y = screens.y = layer.y;
         }
         else {
             // tell server we're moving graphic or screen
