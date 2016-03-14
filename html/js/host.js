@@ -13,6 +13,7 @@ var Host = function(party) {
     var zoom = 0.5;
     var grid;
     var socket;
+    var renderer;
     var screenArray = [];
     var graphicArray = [];
     host.screenArray = screenArray;
@@ -23,26 +24,40 @@ var Host = function(party) {
 
     function connect() {
         party.socket = socket = io.connect(party.ipAddress + ':80', { transports: ['websocket'] });
+        socket.io.on('connect_error', function() {
+            console.log('connection error');
+        });
     }
 
     function listen() {
         socket.on('roomCreated', roomCreated)
               .on('clientLeft', removeScreen)
               .on('clientAdded', addScreen)
-              .on('screenMotion', motionScreen)
-              .on('screenStop', screenStop);
-        window.addEventListener('resize', debouncedResize);
+              .on('resizeScreen', resizeScreen)
+              .on('motionScreen', motionScreen)
+              .on('stopScreen', stopScreen);
+        var dbResize = debounce(resize, 100);
+        window.addEventListener('resize', dbResize);
     }
-
-    var debouncedResize = debounce(resize, 100);
 
     function resize() {
 
-        console.log(window.innerWidth, window.innerHeight);
+        renderer.resize(window.innerWidth, window.innerHeight);
+        roomText.x = window.innerWidth - 120;
+        roomText.y = window.innerHeight;
     }
 
 
+    function resizeScreen(data) {
 
+        var screen = screenArray[data.index];
+        var rect = screen.sprite.children[0];
+        var text = screen.sprite.children[1];
+        rect.width = data.size.width * 10;
+        rect.height = data.size.height * 10;
+        text.x = data.size.width/2 - 160;
+        text.y = data.size.height/2;
+    }
 
     function roomCreated(data) {
 
@@ -77,28 +92,16 @@ var Host = function(party) {
         sprite.on('mousedown', dragStart).on('mouseup', dragEnd).on('mouseupoutside', dragEnd);
         sprite.addChild(gfx);
         sprite.addChild(text);
-
-        //sprite.screenID = data.id; // <-- remove this
         sprite.id = data.id;
 
         screens.addChild(sprite);
-        //sprite.anchor.set(0.5);
 
         var screen = new Screen(data.id2, data.id, sprite, { x:0, y:0 }, { x:0, y:0 }, { x:0, y:0 }, data.width, data.height, data.orientation);
         screenArray.push(screen);
 
-        /*var graphicArray = [];
-        for(var i = 1; i < graphics.children.length; i++) {
-            var sprite = graphics.children[i];
-            var spriteData = {};
-            spriteData.texture = sprite.texture.baseTexture.imageUrl;
-            spriteData.position = sprite.position;
-            graphicArray.push(spriteData);
-        }
-        */
-        console.log(graphicArray)
         socket.emit('setupScreen', {
             id : data.id,
+            index : screenArray.length - 1,
             offset : {
                 x : 0,
                 y : 0
@@ -132,9 +135,7 @@ var Host = function(party) {
         sprite.dragEvent = "moveGraphic";
         sprite.id = host.graphics.children.length - 1;
         sprite.texture.baseTexture.on('loaded', function() {
-        //    sprite.x = graphics.width/2;
-        //    sprite.y = graphics.height/2;
-        //    sprite.anchor.set(0.5);
+
         });
         graphicArray.push({
             texture: image,
@@ -263,7 +264,7 @@ var Host = function(party) {
         }
     }
 
-    function screenStop(data) {
+    function stopScreen(data) {
 
         for(var i = 0; i < screenArray.length; i++) {
             if(screenArray[i].id == data.index) {

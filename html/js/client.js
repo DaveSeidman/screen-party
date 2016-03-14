@@ -8,6 +8,8 @@ var Client = function(party) {
     var agent = getAgent();
     var socket;
     var grid;
+    var room;
+    var renderer;
 
     connect();
     listen();
@@ -23,20 +25,43 @@ var Client = function(party) {
             "height=" + window.innerHeight + "&" +
             "orientation=" + window.orientation
         });
-        client.roomID = window.location.hash.substring(1);
+        client.room = room = window.location.hash.substring(1);
     }
 
     function listen() {
 
-        socket.on('roomFound', roomFound);
-        socket.on('roomNotFound', roomNotFound);
-        socket.on('hostLeft', hostLeft);
-        socket.on('addGraphic', addGraphic);
-        socket.on('moveGraphic', moveGraphic);
-        socket.on('setupScreen', setupScreen);
-        socket.on('moveScreen', moveScreen);
-        socket.on('clearCanvas', clearCanvas);
+        socket.on('roomFound', roomFound)
+              .on('roomNotFound', roomNotFound)
+              .on('hostLeft', hostLeft)
+              .on('addGraphic', addGraphic)
+              .on('moveGraphic', moveGraphic)
+              .on('setupScreen', setupScreen)
+              .on('moveScreen', moveScreen)
+              .on('clearCanvas', clearCanvas);
+
+        var dbResize = debounce(resize, 100);
+        window.addEventListener('resize', dbResize);
     }
+
+    function resize() {
+        socket.emit('resize', {
+            room: room,
+            index: screenIndex,
+            size: {
+                width: window.innerWidth,
+                height: window.innerHeight
+            }
+        });
+        renderer.resize(window.innerWidth, window.innerHeight);
+
+        roomText.x = window.innerWidth/2 - 70;
+        roomText.y = window.innerHeight/2;
+    }
+
+
+
+
+
 
 
     // Room functions ----
@@ -72,7 +97,7 @@ var Client = function(party) {
 
 
     function setupScreen(data) {
-        client.screenIndex = screenIndex = data.screenIndex;
+        client.screenIndex = screenIndex = data.index;
         for(var i = 0; i < data.graphics.length; i++) {
 
             addGraphic(data.graphics[i]);
@@ -151,9 +176,9 @@ var Client = function(party) {
 
         if(Math.abs(event.acceleration.x) > 0.1 || Math.abs(event.acceleration.y) > 0.1) {
             socket.emit('motion', {
-                roomID:client.roomID,
-                socket:socket.id,
-                index:client.screenIndex,
+                room: room,
+                socket: socket.id,
+                index: screenIndex,
                 movement: {
                     x: event.acceleration.x,
                     y: event.acceleration.y
@@ -162,9 +187,9 @@ var Client = function(party) {
         }
         else {
             socket.emit('stop', {
-                roomID:client.roomID,
-                socket:socket.id,
-                index:client.screenIndex
+                room: roomID,
+                socket: socket.id,
+                index: screenIndex
             });
         }
     }
