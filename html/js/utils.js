@@ -24,10 +24,10 @@ function getAgent() {
 
 
 var fontStyle = {
-    font: 'bold 120px Arial', // Set style, size and font
-    fill: 'white', // Set fill color to blue
-    align: 'center', // Center align the text, since it's multiline
-    stroke: '#black', // Set stroke color to a dark blue-gray color
-    strokeThickness: 4, // Set stroke thickness to 20
-    lineJoin: 'round' // Set the lineJoin to round instead of 'miter'
+    font: 'bold 120px Arial',
+    fill: 'white',
+    align: 'center',
+    stroke: '#black',
+    strokeThickness: 4,
+    lineJoin: 'round'
 }

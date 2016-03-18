@@ -75,7 +75,8 @@ io.on('connection', function (socket) {
             socket.emit('roomFound', { id : clientAmount })
                 .on('resize', function(data) { if(hosts[data.room]) io.to(hosts[data.room].id).emit('resizeScreen', data); })
                 .on('motion', function(data) { if(hosts[data.room]) io.to(hosts[data.room].id).emit('motionScreen', data); })
-                .on('stop', function(data) { if(hosts[data.room]) io.to(hosts[data.room].id).emit('stopScreen', data); });
+                .on('stop', function(data) { if(hosts[data.room]) io.to(hosts[data.room].id).emit('stopScreen', data); })
+                .on('rotate', function(data) { if(hosts[data.room]) io.to(hosts[data.room].id).emit('rotateScreen', data) });
         }
         else {  // room doesn't exist
             console.log(colors.red("room not found"));

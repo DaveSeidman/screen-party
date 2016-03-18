@@ -35,9 +35,18 @@ var Host = function(party) {
               .on('clientAdded', addScreen)
               .on('resizeScreen', resizeScreen)
               .on('motionScreen', motionScreen)
-              .on('stopScreen', stopScreen);
+              .on('stopScreen', stopScreen)
+              .on('rotateScreen', rotateScreen);
         var dbResize = debounce(resize, 100);
         window.addEventListener('resize', dbResize);
+    }
+
+    function rotateScreen(data) {
+
+        console.log("rotation", data.rotation);
+        var screen = screenArray[data.index].sprite;
+        var radians = (data.rotation - 120) * (180/Math.PI);
+        screen.rotate(radians);
     }
 
     function resize() {
@@ -77,12 +86,18 @@ var Host = function(party) {
     }
 
     function addScreen(data) {
-        console.log(data);
-        var gfx = new PIXI.Graphics();
+
+        //var gfx = new PIXI.Graphics();
         var sprite = new PIXI.Sprite();
 
-        gfx.beginFill(0xFFFFFF, 0.75);
-        gfx.drawRect(0, 0, data.width, data.height);
+        var frameImg = PIXI.Texture.fromImage('img/phoneframe.png');
+        var frame = new PIXI.Sprite(frameImg);
+        frame.x = -17;
+        frame.y = -69;
+
+        //gfx.beginFill(0xFFFFFF, 0.75);
+        //gfx.drawRect(0, 0, data.width, data.height);
+
         var text = new PIXI.Text(data.id2, fontStyle);
         text.anchor.x = 0.5;
         text.anchor.y = 0.5;
@@ -92,7 +107,8 @@ var Host = function(party) {
         sprite.buttonMode = true;
         sprite.dragEvent = "moveScreen";
         sprite.on('mousedown', dragStart).on('mouseup', dragEnd).on('mouseupoutside', dragEnd);
-        sprite.addChild(gfx);
+        //sprite.addChild(gfx);
+        sprite.addChild(frame);
         sprite.addChild(text);
         sprite.id = data.id;
 

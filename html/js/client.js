@@ -10,6 +10,7 @@ var Client = function(party) {
     var grid;
     var room;
     var renderer;
+    var rotation;
 
     connect();
     listen();
@@ -41,6 +42,17 @@ var Client = function(party) {
 
         var dbResize = debounce(resize, 100);
         window.addEventListener('resize', dbResize);
+        Compass.watch(function (heading) {
+
+            if(rotation != heading) {
+                socket.emit('rotate', {
+                    room: room,
+                    index: screenIndex,
+                    rotation: heading
+                });
+            }
+            rotation = heading;
+        });
     }
 
     function resize() {
