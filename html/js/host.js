@@ -77,14 +77,16 @@ var Host = function(party) {
     }
 
     function addScreen(data) {
-
+        console.log(data);
         var gfx = new PIXI.Graphics();
         var sprite = new PIXI.Sprite();
 
         gfx.beginFill(0xFFFFFF, 0.75);
         gfx.drawRect(0, 0, data.width, data.height);
-        var text = new PIXI.Text(data.id.substring(2), { font : '28px Courier' });
-        text.x = data.width/2 - 160;
+        var text = new PIXI.Text(data.id2, fontStyle);
+        text.anchor.x = 0.5;
+        text.anchor.y = 0.5;
+        text.x = data.width/2;
         text.y = data.height/2;
         sprite.interactive = true;
         sprite.buttonMode = true;

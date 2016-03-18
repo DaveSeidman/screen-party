@@ -68,10 +68,15 @@ var Client = function(party) {
 
     function roomFound(data) {
 
+
+
         stage.removeChild(roomText);
-        roomText = new PIXI.Text(socket.id, { font : '14px courier' });
-        roomText.x = window.innerWidth/2 - 70;
+        roomText = new PIXI.Text(data.id, fontStyle);
+        roomText.anchor.x = 0.5;
+        roomText.anchor.y = 0.5;
+        roomText.x = window.innerWidth/2;
         roomText.y = window.innerHeight/2;
+        roomText.alpha = 0.25;
         stage.addChild(roomText);
 
     }
@@ -196,13 +201,4 @@ var Client = function(party) {
 
     return client;
 
-    function getAgent() {
-        var agent = "default";
-        if(navigator.userAgent.match(/Android/i)) agent = "android";
-        if(navigator.userAgent.match(/BlackBerry/i)) agent = "blackberry";
-        if(navigator.userAgent.match(/iPhone|iPad|iPod/i)) agent = "ios";
-        if(navigator.userAgent.match(/Opera Mini/i)) agent = "opera";
-        if(navigator.userAgent.match(/IEMobile/i)) agent = "ie";
-        return agent;
-    }
 }
