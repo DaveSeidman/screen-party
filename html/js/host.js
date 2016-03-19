@@ -45,7 +45,7 @@ var Host = function(party) {
 
         var screen = screenArray[data.index].sprite;
         var radians = (data.rotation + 225) * (Math.PI/180);
-        screen.rotation = radians;
+        if(screen) screen.rotation = radians;
     }
 
     function resize() {
@@ -87,30 +87,37 @@ var Host = function(party) {
     function addScreen(data) {
 
         var sprite = new PIXI.Sprite();
-        var frameImg = PIXI.Texture.fromImage('img/phoneframe.png');
-        var frame = new PIXI.Sprite(frameImg);
-        frame.x = -17;
-        frame.y = -69;
+
+        var frame = new PIXI.Graphics();
+        frame.beginFill(0x111111);
+        frame.drawRoundedRect(-30,-60,parseInt(data.width)+60,parseInt(data.height)+120, 20);
+        frame.endFill();
+        sprite.addChild(frame)
+
+        var area = new PIXI.Graphics();
+        area.beginFill(0xffffff);
+        area.drawRect(0,0,data.width,data.height);
+        area.endFill();
+        sprite.addChild(area);
 
         var text = new PIXI.Text(data.id2, fontStyle);
         text.anchor.x = 0.5;
         text.anchor.y = 0.5;
         text.x = data.width/2;
         text.y = data.height/2;
+        text.alpha = 0.25;
         sprite.interactive = true;
         sprite.buttonMode = true;
         sprite.dragEvent = "moveScreen";
         sprite.on('mousedown', dragStart).on('mouseup', dragEnd).on('mouseupoutside', dragEnd);
-        sprite.addChild(frame);
+        //sprite.addChild(frame);
+
+
         sprite.addChild(text);
+        sprite.anchor.set(0.5);
         sprite.id = data.id;
         screens.addChild(sprite);
-        sprite.texture.baseTexture.on('loaded', function() {
-            frame.width = data.width + 34;
-            frame.height = data.height + 138;
-            sprite.anchor.x = 0.5;
-            sprite.anchor.y = 0.5;
-        });
+
 
         var screen = new Screen(data.id2, data.id, sprite, { x:0, y:0 }, { x:0, y:0 }, { x:0, y:0 }, data.width, data.height, data.orientation);
         screenArray.push(screen);
@@ -316,7 +323,7 @@ var Host = function(party) {
 
 
 
-
+    // move this into it's own file
     var Screen = function(id, socket, sprite, position, velocity, prevVelocity, width, height, orientation) {
         this.id = id;
         this.socket = socket;
