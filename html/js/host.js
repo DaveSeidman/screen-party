@@ -296,6 +296,8 @@ var Host = function(party) {
             //screen.velocity.y += data.movement.y;
             screen.velocity.x += data.movement.x * (data.time/10);
             screen.velocity.y += data.movement.y * (data.time/10);
+
+
         }
 
     }
@@ -315,13 +317,26 @@ var Host = function(party) {
     function updateScreenPositions() {
 
         for(var i = 0; i < screenArray.length; i++) {
+
             var screen = screenArray[i];
-            //screen.velocity.x *= 0.975;
-            //screen.velocity.y *= 0.975;
+
             screen.velocity.x *= 0.9;
             screen.velocity.y *= 0.9;
-            screen.sprite.x -= screen.velocity.x;
-            screen.sprite.y += screen.velocity.y;
+
+            if(Math.abs(screen.velocity.x) > 0.05 || Math.abs(screen.velocity.y) > 0.05) {
+
+                screen.sprite.x -= screen.velocity.x;
+                screen.sprite.y += screen.velocity.y;
+
+                socket.emit('moveScreen', {
+                    room:host.roomID,
+                    id:screen.id,
+                    position: {
+                        x: screen.sprite.x,
+                        y: screen.sprite.y
+                    }
+                });
+            }
             // if(screen.velocity.x < 0.1) screen.velocity.x = 0;
             // else screen.sprite.x += screen.velocity.x;
             // if(screen.velocity.y < 0.1) screen.velocity.y = 0;

@@ -44,17 +44,17 @@ var Client = function(party) {
         window.addEventListener('resize', dbResize);
         Compass.watch(function (heading) {
 
-            if(rotation != heading) {
-
-                socket.emit('rotate', {
-                    room: room,
-                    index: screenIndex,
-                    rotation: heading
-                });
-
-                roomText.rotation = -((heading + 225) * Math.PI/180);
-            }
-            rotation = heading;
+            // if(rotation != heading) {
+            //
+            //     socket.emit('rotate', {
+            //         room: room,
+            //         index: screenIndex,
+            //         rotation: heading
+            //     });
+            //
+            //     roomText.rotation = -((heading + 225) * Math.PI/180);
+            // }
+            // rotation = heading;
         });
     }
 
@@ -120,7 +120,7 @@ var Client = function(party) {
 
             addGraphic(data.graphics[i]);
         }
-        window.addEventListener('devicemotion', screenMovement);
+        //window.addEventListener('devicemotion', screenMovement);
     }
 
     function addGraphic(data) {
@@ -143,8 +143,8 @@ var Client = function(party) {
 
 
     function moveScreen(data) {
-        grid.x = graphics.x = -data.position.x;
-        grid.y = graphics.y = -data.position.y;
+        grid.x = graphics.x = -data.position.x + window.innerWidth/2;
+        grid.y = graphics.y = -data.position.y + window.innerHeight/2;
     }
 
     function assetMovement() {
@@ -195,7 +195,6 @@ var Client = function(party) {
 
     function screenMovement(event) {
 
-
         if(Math.abs(event.acceleration.x) > 0.05 || Math.abs(event.acceleration.y) > 0.05) {
 
             moveEndTime = new Date().getTime();
@@ -208,7 +207,7 @@ var Client = function(party) {
                     x: event.acceleration.x,
                     y: event.acceleration.y
                 },
-                time : moveEndTime - moveStartTime > 2000 ? 0 : moveEndTime - moveStartTime
+                time : moveEndTime - moveStartTime > 100 ? 0 : moveEndTime - moveStartTime
             });
 
             moveStartTime = new Date().getTime();
