@@ -41,12 +41,6 @@ var Host = function(party) {
         window.addEventListener('resize', dbResize);
     }
 
-    function rotateScreen(data) {
-
-        var screen = screenArray[data.index].sprite;
-        var radians = (data.rotation + 225) * (Math.PI/180);
-        if(screen) screen.rotation = radians;
-    }
 
     function resize() {
 
@@ -90,12 +84,14 @@ var Host = function(party) {
 
         var frame = new PIXI.Graphics();
         frame.beginFill(0x111111);
+        frame.fillAlpha = 0.5;
         frame.drawRoundedRect(-30,-60,parseInt(data.width)+60,parseInt(data.height)+120, 20);
         frame.endFill();
         sprite.addChild(frame)
 
         var area = new PIXI.Graphics();
         area.beginFill(0xffffff);
+        area.fillAlpha = 0.25;
         area.drawRect(0,0,data.width,data.height);
         area.endFill();
         sprite.addChild(area);
@@ -106,6 +102,7 @@ var Host = function(party) {
         text.x = data.width/2;
         text.y = data.height/2;
         text.alpha = 0.25;
+        sprite.idText = text;
         sprite.interactive = true;
         sprite.buttonMode = true;
         sprite.dragEvent = "moveScreen";
@@ -114,7 +111,8 @@ var Host = function(party) {
 
 
         sprite.addChild(text);
-        sprite.anchor.set(0.5);
+        sprite.pivot.x = data.width/2;
+        sprite.pivot.y = data.height/2;
         sprite.id = data.id;
         screens.addChild(sprite);
 
@@ -273,50 +271,70 @@ var Host = function(party) {
 
 
 
+    function rotateScreen(data) {
 
+        if(screenArray[data.index]) {
+            var screen = screenArray[data.index].sprite;
+            var radians = (data.rotation + 225) * (Math.PI/180);
+            //screen.rotation = radians;
+            //screen.idText.rotation = -radians;
+
+            TweenLite.to(screen, 0.5, {rotation: radians });
+            TweenLite.to(screen.idText, 0.5, {rotation: -radians });
+
+        }
+    }
 
     function motionScreen(data) {
 
-        for(var i = 0; i < screenArray.length; i++) {
-            if(screenArray[i].id == data.index) {
+        //console.log("go", data.movement);
+        //for(var i = 0; i < screenArray.length; i++) {
+        if(screenArray[data.index]) {
 
-                var screen = screenArray[i];
-                screen.velocity.x -= data.movement.x;
-                screen.velocity.y += data.movement.y;
-            }
+            var screen = screenArray[data.index];
+            //screen.velocity.x += data.movement.x;
+            //screen.velocity.y += data.movement.y;
+            screen.velocity.x += data.movement.x * (data.time/10);
+            screen.velocity.y += data.movement.y * (data.time/10);
         }
+
     }
 
     function stopScreen(data) {
 
-        for(var i = 0; i < screenArray.length; i++) {
-            if(screenArray[i].id == data.index) {
-                var screen = screenArray[i];
-                screen.velocity.x = 0;
-                screen.velocity.y = 0;
+        console.log("stop", data);
+        //for(var i = 0; i < screenArray.length; i++) {
+            if(screenArray[data.index]) {
+
+                var screen = screenArray[data.index];
+                //screen.velocity.y = 0;
             }
-        }
+        //}
     }
 
     function updateScreenPositions() {
 
         for(var i = 0; i < screenArray.length; i++) {
             var screen = screenArray[i];
-            //screen.velocity.x *= 0.95;
-            //screen.velocity.y *= 0.95;
-            if(screen.velocity.x < 0.1) screen.velocity.x = 0;
-            else screen.sprite.x += screen.velocity.x;
-            if(screen.velocity.y < 0.1) screen.velocity.y = 0;
-            else screen.sprite.y += screen.velocity.y;
-            if(screen.velocity.x || screen.velocity.y) {
-                socket.emit('moveScreen', {
-                    screenID : screen.ID,
-                    offset : {
-                        x : -screen.sprite.x,
-                        y : -screen.sprite.y
-                    }
-                });
-            }
+            //screen.velocity.x *= 0.975;
+            //screen.velocity.y *= 0.975;
+            screen.velocity.x *= 0.9;
+            screen.velocity.y *= 0.9;
+            screen.sprite.x -= screen.velocity.x;
+            screen.sprite.y += screen.velocity.y;
+            // if(screen.velocity.x < 0.1) screen.velocity.x = 0;
+            // else screen.sprite.x += screen.velocity.x;
+            // if(screen.velocity.y < 0.1) screen.velocity.y = 0;
+            // else screen.sprite.y += screen.velocity.y;
+            // if(screen.velocity.x || screen.velocity.y) {
+            //     socket.emit('moveScreen', {
+            //         screenID : screen.ID,
+            //         offset : {
+            //             x : -screen.sprite.x,
+            //             y : -screen.sprite.y
+            //         }
+            //     });
+            // }
         }
     }
 

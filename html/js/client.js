@@ -45,11 +45,14 @@ var Client = function(party) {
         Compass.watch(function (heading) {
 
             if(rotation != heading) {
+
                 socket.emit('rotate', {
                     room: room,
                     index: screenIndex,
                     rotation: heading
                 });
+
+                roomText.rotation = -((heading + 225) * Math.PI/180);
             }
             rotation = heading;
         });
@@ -79,8 +82,6 @@ var Client = function(party) {
     // Room functions ----
 
     function roomFound(data) {
-
-
 
         stage.removeChild(roomText);
         roomText = new PIXI.Text(data.id, fontStyle);
@@ -119,7 +120,7 @@ var Client = function(party) {
 
             addGraphic(data.graphics[i]);
         }
-        //window.addEventListener('devicemotion', screenMovement);
+        window.addEventListener('devicemotion', screenMovement);
     }
 
     function addGraphic(data) {
@@ -189,9 +190,16 @@ var Client = function(party) {
         requestAnimationFrame(render);
     }
 
+    var moveStartTime = new Date().getTime();
+    var moveEndTime = new Date().getTime();
+
     function screenMovement(event) {
 
-        if(Math.abs(event.acceleration.x) > 0.1 || Math.abs(event.acceleration.y) > 0.1) {
+
+        if(Math.abs(event.acceleration.x) > 0.05 || Math.abs(event.acceleration.y) > 0.05) {
+
+            moveEndTime = new Date().getTime();
+
             socket.emit('motion', {
                 room: room,
                 socket: socket.id,
@@ -199,16 +207,19 @@ var Client = function(party) {
                 movement: {
                     x: event.acceleration.x,
                     y: event.acceleration.y
-                }
+                },
+                time : moveEndTime - moveStartTime > 2000 ? 0 : moveEndTime - moveStartTime
             });
+
+            moveStartTime = new Date().getTime();
         }
-        else {
-            socket.emit('stop', {
-                room: roomID,
-                socket: socket.id,
-                index: screenIndex
-            });
-        }
+        // else {
+        //     socket.emit('stop', {
+        //         room: roomID,
+        //         socket: socket.id,
+        //         index: screenIndex
+        //     });
+        // }
     }
 
     return client;
