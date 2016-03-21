@@ -276,11 +276,15 @@ var Host = function(party) {
         if(screenArray[data.index]) {
             var screen = screenArray[data.index].sprite;
             var radians = (data.rotation + 225) * (Math.PI/180);
-            //screen.rotation = radians;
-            //screen.idText.rotation = -radians;
 
             TweenLite.to(screen, 0.5, {rotation: radians });
             TweenLite.to(screen.idText, 0.5, {rotation: -radians });
+
+            socket.emit('rotateScreen', {
+                room:host.roomID,
+                id:screen.id,
+                rotation: radians
+            });
 
         }
     }
@@ -296,7 +300,6 @@ var Host = function(party) {
             //screen.velocity.y += data.movement.y;
             screen.velocity.x += data.movement.x * (data.time/10);
             screen.velocity.y += data.movement.y * (data.time/10);
-
 
         }
 

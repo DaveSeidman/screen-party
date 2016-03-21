@@ -38,25 +38,28 @@ var Client = function(party) {
               .on('moveGraphic', moveGraphic)
               .on('setupScreen', setupScreen)
               .on('moveScreen', moveScreen)
+              .on('rotateScreen', rotateScreen)
               .on('clearCanvas', clearCanvas);
 
         var dbResize = debounce(resize, 100);
         window.addEventListener('resize', dbResize);
         Compass.watch(function (heading) {
 
-            // if(rotation != heading) {
-            //
-            //     socket.emit('rotate', {
-            //         room: room,
-            //         index: screenIndex,
-            //         rotation: heading
-            //     });
-            //
-            //     roomText.rotation = -((heading + 225) * Math.PI/180);
-            // }
-            // rotation = heading;
+            if(rotation != heading) {
+
+                socket.emit('rotate', {
+                    room: room,
+                    index: screenIndex,
+                    rotation: heading
+                });
+
+                roomText.rotation = -((heading + 225) * Math.PI/180);
+            }
+            rotation = heading;
         });
     }
+
+
 
     function resize() {
         socket.emit('resize', {
@@ -146,6 +149,12 @@ var Client = function(party) {
         grid.x = graphics.x = -data.position.x + window.innerWidth/2;
         grid.y = graphics.y = -data.position.y + window.innerHeight/2;
     }
+
+    function rotateScreen(data) {
+
+        grid.rotation = data.rotation;
+    }
+
 
     function assetMovement() {
 

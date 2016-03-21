@@ -96,6 +96,7 @@ io.on('connection', function (socket) {
             .on('setupScreen', function(data) { io.to(data.id).emit('setupScreen', data); })
             .on('moveGraphic', function(data) { io.to([data.room]).emit('moveGraphic', data); })
             .on('moveScreen', function(data) { io.to(data.id).emit('moveScreen', data); })
+            .on('rotateScreen', function(data), { io.to(data.id).emit('rotateScreen', data); })
             .on('clearStage', function(data) { io.to(data.roomID).emit('clearCanvas'); });
 
         console.log(colors.cyan("no roomID found, creating one", _roomID));
