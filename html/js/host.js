@@ -18,6 +18,32 @@ var Host = function(party) {
     var graphicArray = [];
     host.screenArray = screenArray;
 
+
+
+    var movement = false;
+    var newMotion = true;
+    var motionTimeout;
+    var startTime;
+    var chart = new PIXI.Sprite();
+    var chartHeight = 400;
+    var chartWidth = 600;
+    var lastPoint;
+    var graph;
+    var total;
+    var rect1 = new PIXI.Graphics();
+    var rect2 = new PIXI.Graphics();
+    var thisTime = new Date().getTime();
+    var lastTime = new Date().getTime();
+    var interval = 1;
+
+    var acl = 0;
+    var vel = 0;
+    var pos = 0;
+
+    var count = 0;
+
+    var motionArray = [];
+
     connect();
     listen();
     createCanvas();
@@ -226,7 +252,7 @@ var Host = function(party) {
 
     function createCanvas() {
 
-        renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
+        renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight, null, false, true);
         renderer.backgroundColor = 0x555555;
         host.stage = stage = new PIXI.Container();
         host.graphics = graphics = new PIXI.Container();
@@ -259,6 +285,8 @@ var Host = function(party) {
     }
     function update() {
 
+        //if(movement) sampleMotion();
+        sampleMotion();
         updateScreenPositions();
         render();
         requestAnimationFrame(update);
@@ -289,19 +317,95 @@ var Host = function(party) {
         }
     }
 
+
+
+    function clearChart() {
+
+
+
+        chart.removeChildren(0, chart.children.length);
+        chart.x = 100;
+        chart.y = 100;
+        stage.addChild(chart);
+
+        var bg = new PIXI.Graphics();
+        bg.beginFill(0xffffff);
+        bg.drawRect(0,0,chartWidth,chartHeight);
+        bg.endFill();
+        chart.addChild(bg);
+
+
+        rect1.clear();
+        total = 0;
+
+        if(motionArray.length > 61)    analyzeMotion();
+        count = 0;
+        startTime = new Date().getTime();
+        motionArray.length = 0;
+
+    }
+
+    function analyzeMotion() {
+
+        // remove last 60 entries since they should be 0
+        var motionArraySliced = motionArray.slice(0, motionArray.length-60);
+        var elapsed = new Date().getTime() - startTime;
+
+        var offset = 0;
+        for(var i = 0; i < motionArraySliced.length; i++) {
+            offset += motionArraySliced[i];
+        }
+        console.log("time:", elapsed, "points:", motionArraySliced.length, "offset:", offset, "avg:", offset/elapsed);
+    }
+
+
+
+
+    function sampleMotion() {
+
+        //if(Math.abs(acl) <= .1) acl = 0;
+
+        if(acl == 0) count++;
+        else count = 0;
+        if(count > 60) clearChart();
+
+        motionArray.push(acl);
+        thisTime = new Date().getTime();
+
+        var elapsed = thisTime - startTime;
+        var point = { x : elapsed/(chartWidth/100), y : acl * chartHeight/10 };
+
+        rect1.beginFill(0x111111);
+        rect1.drawRect(point.x, chartHeight/2, 10, point.y);
+        rect1.endFill();
+        chart.addChild(rect1);
+
+    }
+
+
     function motionScreen(data) {
+
+        //console.log(data);
+
+        acl = Math.abs(data.movement.x) > .05 ? data.movement.x : 0;
+        //drawChart(data);
+
+
+
 
         //console.log("go", data.movement);
         //for(var i = 0; i < screenArray.length; i++) {
-        if(screenArray[data.index]) {
+        if(screenArray[data.index]) { // shouldn't need to check for this since the screen just moved
 
             var screen = screenArray[data.index];
             //screen.velocity.x += data.movement.x;
             //screen.velocity.y += data.movement.y;
-            screen.velocity.x += data.movement.x * (data.time/10);
-            screen.velocity.y += data.movement.y * (data.time/10);
+            //screen.velocity.x += data.movement.x * (data.time/10);
+            //screen.velocity.y += data.movement.y * (data.time/10);
 
         }
+
+
 
     }
 

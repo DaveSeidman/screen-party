@@ -123,7 +123,7 @@ var Screen = function(party) {
 
             addGraphic(data.graphics[i]);
         }
-        //window.addEventListener('devicemotion', screenMovement);
+        window.addEventListener('devicemotion', screenMovement);
     }
 
     function addGraphic(data) {
@@ -204,23 +204,23 @@ var Screen = function(party) {
 
     function screenMovement(event) {
 
-        if(Math.abs(event.acceleration.x) > 0.05 || Math.abs(event.acceleration.y) > 0.05) {
+        //if(Math.abs(event.acceleration.x) > 0.1) { // || Math.abs(event.acceleration.y) > 0.05) {
 
             moveEndTime = new Date().getTime();
 
             socket.emit('motion', {
                 room: room,
-                socket: socket.id,
+                //socket: socket.id,
                 index: screenIndex,
                 movement: {
-                    x: event.acceleration.x,
-                    y: event.acceleration.y
+                    x: event.acceleration.x//,
+                    //y: event.acceleration.y
                 },
-                time : moveEndTime - moveStartTime > 100 ? 0 : moveEndTime - moveStartTime
+                time : new Date().getTime() //moveEndTime - moveStartTime > 100 ? 0 : moveEndTime - moveStartTime
             });
 
             moveStartTime = new Date().getTime();
-        }
+        //}
         // else {
         //     socket.emit('stop', {
         //         room: roomID,
