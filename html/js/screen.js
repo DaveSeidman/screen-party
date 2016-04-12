@@ -213,8 +213,8 @@ var Screen = function(party) {
                 //socket: socket.id,
                 index: screenIndex,
                 movement: {
-                    x: event.acceleration.x//,
-                    //y: event.acceleration.y
+                    x: event.acceleration.x,
+                    y: event.acceleration.y
                 },
                 time : new Date().getTime() //moveEndTime - moveStartTime > 100 ? 0 : moveEndTime - moveStartTime
             });
