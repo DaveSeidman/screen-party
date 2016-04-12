@@ -39,8 +39,8 @@ var Party = function() {
 
         // client trying to join a room
         if(window.location.hash) {
-            var client = new Client(party);
-            party.client = client;
+            var screen = new Screen(party);
+            party.screen = screen;
         }
         // host creating a new room
         else {

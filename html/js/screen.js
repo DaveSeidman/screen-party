@@ -1,6 +1,6 @@
-var Client = function(party) {
+var Screen = function(party) {
 
-    var client = this;
+    var screen = this;
     var stage;
     var graphics;
     var roomText;
@@ -26,7 +26,7 @@ var Client = function(party) {
             "height=" + window.innerHeight + "&" +
             "orientation=" + window.orientation
         });
-        client.room = room = window.location.hash.substring(1);
+        screen.room = room = window.location.hash.substring(1);
     }
 
     function listen() {
@@ -38,12 +38,12 @@ var Client = function(party) {
               .on('moveGraphic', moveGraphic)
               .on('setupScreen', setupScreen)
               .on('moveScreen', moveScreen)
-              .on('rotateScreen', rotateScreen)
+             // .on('rotateScreen', rotateScreen)
               .on('clearCanvas', clearCanvas);
 
         var dbResize = debounce(resize, 100);
         window.addEventListener('resize', dbResize);
-        Compass.watch(function (heading) {
+        /*Compass.watch(function (heading) {
 
             if(rotation != heading) {
 
@@ -56,7 +56,7 @@ var Client = function(party) {
                 roomText.rotation = -((heading + 225) * Math.PI/180);
             }
             rotation = heading;
-        });
+        });*/
     }
 
 
@@ -118,7 +118,7 @@ var Client = function(party) {
 
 
     function setupScreen(data) {
-        client.screenIndex = screenIndex = data.index;
+        screen.screenIndex = screenIndex = data.index;
         for(var i = 0; i < data.graphics.length; i++) {
 
             addGraphic(data.graphics[i]);
@@ -164,8 +164,8 @@ var Client = function(party) {
     function createCanvas() {
         renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight);
         renderer.backgroundColor = 0x555555;
-        client.stage = stage = new PIXI.Container();
-        client.graphics = graphics = new PIXI.Container();
+        screen.stage = stage = new PIXI.Container();
+        screen.graphics = graphics = new PIXI.Container();
         var gridTexture = PIXI.Texture.fromImage('img/grid2.jpg');
         grid = new PIXI.Sprite(gridTexture);
         stage.addChild(grid);
@@ -230,6 +230,6 @@ var Client = function(party) {
         // }
     }
 
-    return client;
+    return screen;
 
 }
