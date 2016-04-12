@@ -85,7 +85,8 @@ io.on('connection', function (socket) {
     }
     else {  // --- HOST -- create a room with a random ID
 
-        _roomID = Math.floor(Math.random()*900) + 100; // add check to make sure this isn't already in rooms array
+        //_roomID = Math.floor(Math.random()*900) + 100; // add check to make sure this isn't already in rooms array
+        _roomID = 900;
         rooms[_roomID] = _roomID;
         hosts[_roomID] = socket;
 

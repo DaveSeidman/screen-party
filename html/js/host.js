@@ -32,9 +32,11 @@ var Host = function(party) {
     var total;
     var rect1 = new PIXI.Graphics();
     var rect2 = new PIXI.Graphics();
+    var lines = new PIXI.Graphics();
     var thisTime = new Date().getTime();
     var lastTime = new Date().getTime();
     var interval = 1;
+    var idletime = 3;
 
     var acl = 0;
     var vel = 0;
@@ -139,6 +141,8 @@ var Host = function(party) {
         sprite.addChild(text);
         sprite.pivot.x = data.width/2;
         sprite.pivot.y = data.height/2;
+        sprite.x = window.innerWidth/2;
+        sprite.y = window.innerHeight/2;
         sprite.id = data.id;
         screens.addChild(sprite);
 
@@ -150,8 +154,8 @@ var Host = function(party) {
             id : data.id,
             index : screenArray.length - 1,
             offset : {
-                x : 0,
-                y : 0
+                x : window.innerWidth/2,
+                y : window.innerHeight/2
             },
             graphics : graphicArray
         });
@@ -319,9 +323,25 @@ var Host = function(party) {
 
 
 
+
+    function motionScreen(data) {
+
+        acl = Math.abs(data.movement.x) > .05 ? data.movement.x : 0;
+        //drawChart(data);
+        //console.log("go", data.movement);
+        //for(var i = 0; i < screenArray.length; i++) {
+        if(screenArray[data.index]) { // shouldn't need to check for this since the screen just moved
+
+            var screen = screenArray[data.index];
+            //screen.velocity.x += data.movement.x;
+            //screen.velocity.y += data.movement.y;
+            //screen.velocity.x += data.movement.x * (data.time/10);
+            //screen.velocity.y += data.movement.y * (data.time/10);
+
+        }
+    }
+
     function clearChart() {
-
-
 
         chart.removeChildren(0, chart.children.length);
         chart.x = 100;
@@ -336,43 +356,30 @@ var Host = function(party) {
 
 
         rect1.clear();
+        lines.clear();
         total = 0;
 
-        if(motionArray.length > 61)    analyzeMotion();
+        if(motionArray.length > idletime + 10) analyzeMotion();
         count = 0;
         startTime = new Date().getTime();
         motionArray.length = 0;
-
     }
-
-    function analyzeMotion() {
-
-        // remove last 60 entries since they should be 0
-        var motionArraySliced = motionArray.slice(0, motionArray.length-60);
-        var elapsed = new Date().getTime() - startTime;
-
-        var offset = 0;
-        for(var i = 0; i < motionArraySliced.length; i++) {
-            offset += motionArraySliced[i];
-        }
-        console.log("time:", elapsed, "points:", motionArraySliced.length, "offset:", offset, "avg:", offset/elapsed);
-    }
-
-
-
 
     function sampleMotion() {
 
         //if(Math.abs(acl) <= .1) acl = 0;
 
+
         if(acl == 0) count++;
         else count = 0;
-        if(count > 60) clearChart();
+        if(count > idletime) clearChart();
 
-        motionArray.push(acl);
         thisTime = new Date().getTime();
 
+        velocity = acl * (thisTime - lastTime);
+
         var elapsed = thisTime - startTime;
+        motionArray.push({accel:acl,time:elapsed});
         var point = { x : elapsed/(chartWidth/100), y : acl * chartHeight/10 };
 
         rect1.beginFill(0x111111);
@@ -380,34 +387,56 @@ var Host = function(party) {
         rect1.endFill();
         chart.addChild(rect1);
 
+        lastTime = thisTime;
     }
 
 
-    function motionScreen(data) {
+    function analyzeMotion() {
 
-        //console.log(data);
+        var motionArraySliced = motionArray.slice(0, motionArray.length - idletime);
+        var motionArraySmoothed = [];
 
-        acl = Math.abs(data.movement.x) > .05 ? data.movement.x : 0;
-        //drawChart(data);
+        var offset = 0;
+        for(var i = 0; i < motionArraySliced.length; i++) {
+            //offset += motionArraySliced[i];
+            if(i > 2 && i < motionArraySliced.length - 2) {
 
-
-
-
-        //console.log("go", data.movement);
-        //for(var i = 0; i < screenArray.length; i++) {
-        if(screenArray[data.index]) { // shouldn't need to check for this since the screen just moved
-
-            var screen = screenArray[data.index];
-            //screen.velocity.x += data.movement.x;
-            //screen.velocity.y += data.movement.y;
-            //screen.velocity.x += data.movement.x * (data.time/10);
-            //screen.velocity.y += data.movement.y * (data.time/10);
-
+                var avgAccel = (motionArraySliced[i-2].accel +
+                                motionArraySliced[i-1].accel +
+                                motionArraySliced[i-0].accel +
+                                motionArraySliced[i+1].accel +
+                                motionArraySliced[i+2].accel)/5;
+                motionArraySmoothed.push({accel:avgAccel, time:motionArraySliced[i].time});
+            }
         }
 
+        var beg = 0;
+        var end = 0;
+        var max = 0;
 
+        for(var i = 0; i < motionArraySmoothed.length; i++) {
 
+            var point = { x : motionArraySmoothed[i].time/(chartWidth/100), y : motionArraySmoothed[i].accel * chartHeight/10 };
+            rect1.beginFill(0x111111);
+            rect1.drawRect(point.x, chartHeight/2, 10, point.y);
+            rect1.endFill();
+            chart.addChild(rect1);
+
+            if(motionArraySmoothed[i].accel > max) max = motionArraySmoothed[i].accel;
+            if(i < motionArraySmoothed.length/2) {
+                beg += motionArraySmoothed[i].accel;
+            }
+            else {
+                end += motionArraySmoothed[i].accel;
+            }
+        }
+        console.log(beg > end ? "Moved Left" : "Moved Right", max, motionArraySmoothed[i-1].time);
+        var pos = (max * motionArraySmoothed[i-1].time * (beg > end ? -1 : 1))/10;
+        var screen = screenArray[0].sprite;
+        TweenLite.to(screen, 0.5, { x: screen.x + pos });
     }
+
+
 
     function stopScreen(data) {
 
@@ -470,6 +499,7 @@ var Host = function(party) {
         this.sprite = sprite;
         this.position = position;
         this.velocity = velocity;
+        this.acceleration = 0;
         this.prevVelocity = prevVelocity;
         this.width = width;
         this.height = height;
