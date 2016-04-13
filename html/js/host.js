@@ -22,7 +22,7 @@ var Host = function(party) {
 
     var motionArray = [];
     var motionArraySmooth = [];
-
+    var mag = 6; // amount to move each screen based on accelerometer
     var motionArrayY = [];
     var motionArraySmoothY = [];
     var aclx = 0;
@@ -268,6 +268,7 @@ var Host = function(party) {
     function update() {
 
         sampleMotion();
+        updateScreenPositions();
         render();
         requestAnimationFrame(update);
     }
@@ -350,12 +351,11 @@ var Host = function(party) {
             if(motionArraySmooth[i] < min) min = motionArraySmooth[i];
         }
 
-        var offset = ((Math.abs(min) + Math.abs(max))/2) * i * 5;
-        //console.log("moved", (beg > end ? "left" : "right"), offset);
+        var offset = ((Math.abs(min) + Math.abs(max))/2) * i * mag;
 
         if(screenArray.length) {
-            var screen = screenArray[0].sprite;
-            TweenLite.to(screen, .5, { x: screen.x + offset * (beg > end ? -1 : 1) });
+            var screen = screenArray[0];
+            TweenLite.to(screen.position, .5, { x: screen.position.x + offset * (beg > end ? -1 : 1) });
         }
 
         idleCount = 0;
@@ -378,26 +378,29 @@ var Host = function(party) {
         for(var i = 0; i < motionArraySmoothY.length; i++) {
 
             if(i < motionArraySmoothY.length / 2)  beg += motionArraySmoothY[i];
-            else                            end += motionArraySmoothY[i];
+            else                                   end += motionArraySmoothY[i];
 
             if(motionArraySmoothY[i] > max) max = motionArraySmoothY[i];
             if(motionArraySmoothY[i] < min) min = motionArraySmoothY[i];
         }
 
-        var offset = ((Math.abs(min) + Math.abs(max))/2) * i * 5;
-        console.log("moved", (beg > end ? "left" : "right"), offset);
+        var offset = ((Math.abs(min) + Math.abs(max))/2) * i * mag;
 
         if(screenArray.length) {
-            var screen = screenArray[0].sprite;
-            TweenLite.to(screen, .5, { y: screen.y + offset * (beg > end ? -1 : 1) });
+            var screen = screenArray[0];
+            TweenLite.to(screen.position, .5, { y: screen.position.y + offset * (beg > end ? 1 : -1) });
         }
 
-        idleCount = 0;
-        motionArray.length = 0;
+        idleCountY = 0;
+        motionArrayY.length = 0;
     }
 
-
     function updateScreenPositions() {
+        for(var i = 0; i < screenArray.length; i++) {
+
+            var screen = screenArray[i];
+            screen.sprite.position = screen.position;
+        }
     }
 
     // move this into it's own file
