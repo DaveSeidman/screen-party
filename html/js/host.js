@@ -133,7 +133,7 @@ var Host = function(party) {
         screens.addChild(sprite);
 
 
-        var screen = new Screen(data.id2, data.id, sprite, { x:0, y:0 }, { x:0, y:0 }, { x:0, y:0 }, data.width, data.height, data.orientation);
+        var screen = new Screen(data.id2, data.id, sprite, { x:window.innerWidth/2, y:window.innerHeight/2 });
         screenArray.push(screen);
 
         socket.emit('setupScreen', {
@@ -268,7 +268,7 @@ var Host = function(party) {
     function update() {
 
         sampleMotion();
-        updateScreenPositions();
+        //updateScreenPositions();
         render();
         requestAnimationFrame(update);
     }
@@ -300,6 +300,8 @@ var Host = function(party) {
 
 
     function motionScreen(data) {
+        //console.log(data);
+        screenArray[data.index].acceleration = data.movement;
         aclx = data.movement.x;
         acly = data.movement.y
     }
@@ -342,10 +344,12 @@ var Host = function(party) {
         var end = 0;
         var min = 0;
         var max = 0;
+
+        //   get mid point of "move" plus high and low points.
         for(var i = 0; i < motionArraySmooth.length; i++) {
 
             if(i < motionArraySmooth.length / 2)  beg += motionArraySmooth[i];
-            else                            end += motionArraySmooth[i];
+            else                                  end += motionArraySmooth[i];
 
             if(motionArraySmooth[i] > max) max = motionArraySmooth[i];
             if(motionArraySmooth[i] < min) min = motionArraySmooth[i];
@@ -354,8 +358,9 @@ var Host = function(party) {
         var offset = ((Math.abs(min) + Math.abs(max))/2) * i * mag;
 
         if(screenArray.length) {
-            var screen = screenArray[0];
-            TweenLite.to(screen.position, .5, { x: screen.position.x + offset * (beg > end ? -1 : 1) });
+            var screen = screenArray[0].sprite;
+            TweenLite.to(screen, .5, { x: screen.x + offset * (beg > end ? -1 : 1) });
+            //screen.target.x = screen.sprite.x + offset * (beg > end ? -1 : 1);
         }
 
         idleCount = 0;
@@ -387,34 +392,30 @@ var Host = function(party) {
         var offset = ((Math.abs(min) + Math.abs(max))/2) * i * mag;
 
         if(screenArray.length) {
-            var screen = screenArray[0];
-            TweenLite.to(screen.position, .5, { y: screen.position.y + offset * (beg > end ? 1 : -1) });
+            var screen = screenArray[0].sprite;
+            TweenLite.to(screen, .5, { y: screen.y + offset * (beg > end ? 1 : -1) });
+            //screen.target.y = screen.sprite.y + offset * (beg > end ? 1 : -1);
         }
 
         idleCountY = 0;
         motionArrayY.length = 0;
     }
 
-    function updateScreenPositions() {
+    /*function updateScreenPositions() {
         for(var i = 0; i < screenArray.length; i++) {
 
             var screen = screenArray[i];
-            screen.sprite.position = screen.position;
+            screen.sprite.position.x += (screen.target.x - screen.sprite.position.x)/10;
+            screen.sprite.position.y += (screen.target.y - screen.sprite.position.y)/10;
         }
-    }
+    }*/
 
     // move this into it's own file
-    var Screen = function(id, socket, sprite, position, velocity, prevVelocity, width, height, orientation) {
+    var Screen = function(id, socket, sprite, target) {
         this.id = id;
         this.socket = socket;
         this.sprite = sprite;
-        this.position = position;
-        this.velocity = velocity;
-        this.acceleration = 0;
-        this.prevVelocity = prevVelocity;
-        this.width = width;
-        this.height = height;
-        this.orientation = orientation;
+        this.target = target;
     }
 
 
