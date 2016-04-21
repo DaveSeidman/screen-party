@@ -305,6 +305,7 @@ var Host = function(party) {
         }
     }
 
+
     // move this into it's own file
     var Screen = function(id, socket, sprite, target) {
         this.id = id;

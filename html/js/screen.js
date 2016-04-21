@@ -39,7 +39,6 @@ var Screen = function(party) {
               .on('addGraphic', addGraphic)
               .on('moveGraphic', moveGraphic)
               .on('setupScreen', setupScreen)
-              .on('moveScreen', moveScreen)
              // .on('rotateScreen', rotateScreen)
               .on('clearCanvas', clearCanvas);
 
@@ -96,7 +95,6 @@ var Screen = function(party) {
         roomText.y = window.innerHeight/2;
         roomText.alpha = 0.25;
         stage.addChild(roomText);
-
     }
     function roomNotFound() {
 
@@ -265,6 +263,16 @@ var Screen = function(party) {
             axis: axis,
             movement: movement
         });
+
+        if(axis == 0) {
+
+            TweenLite.to(grid, .5, { x : grid.x - movement });
+            TweenLite.to(graphics, .5 { x : graphics.x - movement });
+        }
+        if(axis == 1) {
+            TweenLite.to(grid, .5, { y : grid.x - movement });
+            TweenLite.to(graphics, .5, { y : grid.y - movement });
+        }
     }
 
 
