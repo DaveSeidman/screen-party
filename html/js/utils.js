@@ -22,6 +22,19 @@ function getAgent() {
     return agent;
 }
 
+function smoothArray(array, samples) {
+
+    var smoothedArray = [];
+    for(var i = 0; i < array.length - samples; i++) {
+        var sum = 0;
+        for(var j = 0; j < samples; j++) {
+            sum += array[i+j];
+        }
+        var avg = sum/samples;
+        smoothedArray.push(avg);
+    }
+    return smoothedArray;
+}
 
 var fontStyle = {
     font: 'bold 120px Arial',

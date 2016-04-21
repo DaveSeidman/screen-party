@@ -75,6 +75,7 @@ io.on('connection', function (socket) {
             socket.emit('roomFound', { id : clientAmount })
                 .on('resize', function(data) { if(hosts[data.room]) io.to(hosts[data.room].id).emit('resizeScreen', data); })
                 .on('motion', function(data) { if(hosts[data.room]) io.to(hosts[data.room].id).emit('motionScreen', data); })
+                .on('testmove', function(data) { if(hosts[data.room]) io.to(hosts[data.room].id).emit('testmove', data); })
                 .on('stop', function(data) { if(hosts[data.room]) io.to(hosts[data.room].id).emit('stopScreen', data); })
                 .on('rotate', function(data) { if(hosts[data.room]) io.to(hosts[data.room].id).emit('rotateScreen', data) });
         }

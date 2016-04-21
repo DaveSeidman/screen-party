@@ -12,6 +12,8 @@ var Screen = function(party) {
     var renderer;
     var rotation;
 
+
+
     connect();
     listen();
     createCanvas();
@@ -169,12 +171,6 @@ var Screen = function(party) {
         var gridTexture = PIXI.Texture.fromImage('img/grid2.jpg');
         grid = new PIXI.Sprite(gridTexture);
         stage.addChild(grid);
-        grid.texture.baseTexture.on('loaded', function() {
-            //graphics.x = -data.offset.x;
-            //graphics.y = -data.offset.y;
-        });
-        //graphics.x = -3000;
-        //graphics.y = -3000;
         stage.addChild(graphics);
         document.body.removeChild(document.getElementById('form'));
         document.body.appendChild(renderer.view);
@@ -199,36 +195,78 @@ var Screen = function(party) {
         requestAnimationFrame(render);
     }
 
-    var moveStartTime = new Date().getTime();
-    var moveEndTime = new Date().getTime();
+
+
+
+    var accelThresh = 0.1;
+    var smoothing = 3;
+    var motionAmount = 6;
+
+
+    var idleCountX = 0;
+    var idleCountY = 0;
+    var idleCountMax = 5;
+
+    var motionX = [];
+    var motionY = [];
+
+    var motionArrays = [motionX, motionY];
 
     function screenMovement(event) {
 
-        //if(Math.abs(event.acceleration.x) > 0.1) { // || Math.abs(event.acceleration.y) > 0.05) {
-
-            moveEndTime = new Date().getTime();
-
-            socket.emit('motion', {
-                room: room,
-                //socket: socket.id,
-                index: screenIndex,
-                movement: {
-                    x: event.acceleration.x,
-                    y: event.acceleration.y
-                },
-                time : new Date().getTime() //moveEndTime - moveStartTime > 100 ? 0 : moveEndTime - moveStartTime
-            });
-
-            moveStartTime = new Date().getTime();
-        //}
-        // else {
-        //     socket.emit('stop', {
-        //         room: roomID,
-        //         socket: socket.id,
-        //         index: screenIndex
-        //     });
-        // }
+        if(Math.abs(event.acceleration.x) > accelThresh) {
+            idleCountX = 0;
+            motionX.push(event.acceleration.x);
+        }
+        else {
+            idleCountX++;
+            if(idleCountX > idleCountMax) if(motionX.length > smoothing) {
+                analyzeMotion(0);
+                idleCountX = 0; // integrate these lines
+                motionX.length = 0;
+            }
+        }
+        if(Math.abs(event.acceleration.y) > accelThresh) {
+            idleCountY = 0;
+            motionY.push(-event.acceleration.y);
+        }
+        else {
+            idleCountY++;
+            if(idleCountY > idleCountMax) if(motionY.length > smoothing) {
+                analyzeMotion(1);
+                idleCountY = 0; // integrate these lines
+                motionY.length = 0;
+            }
+        }
     }
+
+    function analyzeMotion(axis) {
+
+        var motionArraySmooth = smoothArray(motionArrays[axis], smoothing);
+        var beg = 0;
+        var end = 0;
+        var min = 0;
+        var max = 0;
+
+        //   get mid-point of the motion plus the points of fastest motion
+        for(var i = 0; i < motionArraySmooth.length; i++) {
+
+            if(i < motionArraySmooth.length / 2)  beg += motionArraySmooth[i];
+            else                                  end += motionArraySmooth[i];
+            if(motionArraySmooth[i] > max) max = motionArraySmooth[i];
+            if(motionArraySmooth[i] < min) min = motionArraySmooth[i];
+        }
+
+        var movement = (((Math.abs(min) + Math.abs(max))/2) * i * motionAmount) * ((beg > end) ? -1 : 1);
+
+        socket.emit('motion', {
+            room: room,
+            index: screenIndex,
+            axis: axis,
+            movement: movement
+        });
+    }
+
 
     return screen;
 
